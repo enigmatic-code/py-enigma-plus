@@ -3,9 +3,7 @@
 
 from __future__ import print_function
 
-# 
-
-from enigma import enigma, basestring, chunk, join, printf
+from enigma import enigma, basestring, chunk, unpack, join, arg, args, printf
 
 # shapes have 8 possible orientations
 
@@ -43,7 +41,7 @@ polyominoes = {
   # I2: 2 squares - 2x1 block (achiral)
   "I2": (
     ([(0, 0), (1, 0)], R0 | R2 | M0 | M2),
-    ([(0, 0), (0, 1)], R1 | R3 | M1 | M3),    
+    ([(0, 0), (0, 1)], R1 | R3 | M1 | M3),
   ),
 
 
@@ -110,7 +108,7 @@ polyominoes = {
     ([(0, 0), (0, 1), (1, 1), (1, 2)], R1 | R3),
     ([(0, 0), (1, 0), (1, 1), (2, 1)], M0 | M2),
     ([(0, 1), (0, 2), (1, 0), (1, 1)], M1 | M3),
-  ),  
+  ),
 
   # Z4': 4 squares - S shape (chiral)
   "Z4'": (
@@ -118,7 +116,7 @@ polyominoes = {
     ([(0, 1), (0, 2), (1, 0), (1, 1)], R1 | R3),
     ([(0, 1), (1, 0), (1, 1), (2, 0)], M0 | M2),
     ([(0, 0), (0, 1), (1, 1), (1, 2)], M1 | M3),
-  ),  
+  ),
 
   # L4: 4 squares - L shape (chiral)
   "L4": (
@@ -131,7 +129,7 @@ polyominoes = {
     ([(0, 0), (0, 1), (0, 2), (1, 2)], M2),
     ([(0, 1), (1, 1), (2, 0), (2, 1)], M3),
   ),
- 
+
   # 4 squares - r shape (chiral)
   "L4'": (
     ([(0, 0), (1, 0), (1, 1), (1, 2)], R0),
@@ -193,7 +191,7 @@ polyominoes = {
     ([(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)], R0 | R2 | M0 | M2),
     ([(0, 0), (0, 1), (0, 2), (0, 3), (0, 4)], R1 | R3 | M1 | M3),
   ),
-  
+
   # 5 squares - U shape (achiral)
   "U5": (
     ([(0, 0), (0, 1), (1, 0), (2, 0), (2, 1)], R0 | M0),
@@ -382,6 +380,8 @@ akas = {
 shape_flags = {
   "ALL": (R0 | R1 | R2 | R3 | M0 | M1 | M2 | M3),
   "ONE_SIDED": (R0 | R1 | R2 | R3),
+  "R0": R0, "R1": R1, "R2": R2, "R3": R3,
+  "M0": M0, "M1": M1, "M2": M2, "M3": M3,
 }
 
 # collect pieces using the names in ps
@@ -421,7 +421,6 @@ def orientations(ss, flags="ALL", verbose=0, indent=""):
     return normalise((y, -x) for (x, y) in ss)
 
   from collections import defaultdict
-  from enigma import unpack, join
 
   # accumulate shapes by orientation
   d = defaultdict(list)
@@ -453,7 +452,6 @@ def orientations(ss, flags="ALL", verbose=0, indent=""):
 def extend(d):
   for (k, v) in d.items():
     polyominoes[k] = orientations(v)
-    
 
 # [see enigma321.py for simple fit() algorithm]
 
@@ -526,7 +524,7 @@ def fit(ps, x, y, holes=set(), fn=None):
   #   <squares occupied> + <indicator for the piece>
   #
   # where:
-  #   
+  #
   #   <squares> is a boolean <x> * <y> vector
   #   <indicator> is a boolean <len(ps)> vector
   #
@@ -584,7 +582,7 @@ def rectpack(rs, x, y, holes=set(), fn=None):
   # attempt to fit the shapes into a square
   for g in fit(ps, x, y, holes, fn):
     yield g
-  
+
 
 # output a grid
 _labels = "-123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -596,8 +594,6 @@ def output_grid(g, reverse=1, label=_labels, sep=" ", end=""):
 
 
 if enigma._namecheck(__name__):
-
-  from enigma import arg, args, printf
 
   r = arg("D", 0)
 
@@ -622,7 +618,7 @@ if enigma._namecheck(__name__):
     for g in fit(ps, 8, 8, [(3, 3), (3, 4), (4, 3), (4, 4)]):
       output_grid(g)
       n += 1
-    print("[{n} solutions]".format(n=n))
+    printf("[{n} solutions]")
 
   if r == "D":
     x = arg(20, 1, int)
@@ -640,7 +636,7 @@ if enigma._namecheck(__name__):
     for g in fit(ps, x, y):
       output_grid(g)
       n += 1
-    print("[{n} solutions]".format(n=n))
+    printf("[{n} solutions]")
 
   if r == "C":
     # 5x V3s in a 4x4 grid with 1 hole
