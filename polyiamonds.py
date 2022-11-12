@@ -1,11 +1,9 @@
-#!/usr/bin/env python3 -t
+#! python3
 # -*- mode: Python; py-indent-offset: 2; -*-
 
 from __future__ import print_function
 
-# 
-
-from enigma import basestring, exact_cover, irange, unpack, peek, join, printf
+from enigma import (basestring, exact_cover, irange, unpack, peek, join, printf)
 
 # polyiamonds:
 #
@@ -142,7 +140,7 @@ def orientations(proto, flags="ALL", verbose=0, indent=""):
       if v & 1: yield n
       v >>= 1
       n += 1
-      
+
   # accumulate shapes by orientation
   d = dict()
   cs = normalise(proto)
@@ -162,7 +160,7 @@ def orientations(proto, flags="ALL", verbose=0, indent=""):
     for (k, v) in rs:
       v = list("RM"[i] + "012345"[j] for (i, j) in (divmod(x, 6) for x in bits(v)))
       printf("{indent}({k}, {v}),", k=list(k), v=join(v, sep=" | "))
-  
+
   return rs
 
 # generate placements for piece <p> in grid <grid>
