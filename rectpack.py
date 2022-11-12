@@ -1,4 +1,4 @@
-#!/usr/bin/env python -t
+#! python3
 # -*- mode: Python; py-indent-offset: 2; -*-
 
 from __future__ import print_function
