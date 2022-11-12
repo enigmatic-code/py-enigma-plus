@@ -1,9 +1,9 @@
-#!/usr/bin/env python3 -t
+#! python3
 # -*- mode: Python; py-indent-offset: 2; -*-
 
 from __future__ import print_function
 
-from enigma import enigma, basestring, chunk, unpack, join, arg, args, printf
+from enigma import (enigma, algorithmX, basestring, chunk, unpack, join, arg, args, printf)
 
 # shapes have 8 possible orientations
 
@@ -452,42 +452,6 @@ def orientations(ss, flags="ALL", verbose=0, indent=""):
 def extend(d):
   for (k, v) in d.items():
     polyominoes[k] = orientations(v)
-
-# [see enigma321.py for simple fit() algorithm]
-
-# fit using algorithm X
-# (see: [ https://www.cs.mcgill.ca/~aassaf9/python/algorithm_x.html ])
-
-# NOTE: input parameters X, soln are modified; Y is unmodified
-def algorithmX(X, Y, soln):
-  if not X:
-    yield soln
-  else:
-    c = min(X.keys(), key=lambda k: len(X[k]))
-    # copy X[c], as X is modified (could use sorted(X[c]) for stability)
-    for r in list(X[c]):
-      soln.append(r)
-
-      # cols = select(X, Y, r)
-      cols = list()
-      for j in Y[r]:
-        for i in X[j]:
-          for k in Y[i]:
-            if k != j:
-              X[k].remove(i)
-        cols.append(X.pop(j))
-
-      for s in algorithmX(X, Y, soln): yield s
-
-      # deselect(X, Y, r, cols)
-      for j in reversed(Y[r]):
-        X[j] = cols.pop()
-        for i in X[j]:
-          for k in Y[i]:
-            if k != j:
-              X[k].add(i)
-
-      soln.pop()
 
 # generate placements for piece <p> in an <x> x <y> grid, avoiding <holes>
 # <p> is a sequence of possible orientations for the piece
