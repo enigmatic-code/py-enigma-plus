@@ -464,7 +464,7 @@ def placements(p, x, y, holes):
         ss = list()
         for (dx, dy) in q:
           (i, j) = (x0 + dx, y0 + dy)
-          if not(i < x and j < y): break
+          if not (i < x and j < y): break
           if (i, j) in holes: break
           ss.append(i + x * j)
         else:
@@ -473,7 +473,7 @@ def placements(p, x, y, holes):
 def fit(ps, x, y, holes=set(), fn=None):
 
   # check the dimensions of the pieces
-  assert not(sum(len(p[0]) for p in ps) + len(holes) > x * y), "Impossible!"
+  assert not (sum(len(p[0]) for p in ps) + len(holes) > x * y), "Impossible!"
 
   # how to format the results
   # each grid is calculated as a linear list
