@@ -1,8 +1,6 @@
 #! python3
 # -*- mode: Python; py-indent-offset: 2; -*-
 
-from __future__ import print_function
-
 from enigma import (enigma, algorithmX, basestring, chunk, unpack, join, arg, args, printf)
 
 # shapes have 8 possible orientations
@@ -553,8 +551,8 @@ _labels = "-123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 def output_grid(g, reverse=1, label=_labels, sep=" ", end=""):
   if reverse: g = reversed(g)
   for r in g:
-    print("[", join((label[x] for x in r), sep=sep), "]")
-  if end is not None: print(end)
+    printf("[ {r} ]", r=join((label[x] for x in r), sep=sep))
+  if end is not None: printf("{end}")
 
 
 if enigma._namecheck(__name__):
