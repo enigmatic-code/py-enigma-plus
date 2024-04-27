@@ -12,7 +12,9 @@ from __future__ import print_function
 # of the rectangle (which may be in a different orientation to the
 # corresponding input rectangle)
 
-from enigma import (irange, unpack, uniq, join, printf)
+from enigma import (module, irange, unpack, uniq, join, printf)
+
+rectpack = module(__name__)
 
 # sort rectangles <rs> by area (default = largest to smallest)
 def by_area(rs, reverse=0):
@@ -93,8 +95,9 @@ def pack_tight(n, m, rs, ps=[], i=0, j=0):
     (i, j) = empty(n, m, ps, i, j)
     # fit one of the remaining rectangles there
     for (k, r) in enumerate(rs):
-      for (p, q) in {r, r[::-1]}:
-        if not (i + p > n or j + q > m):
+      pq = {r, r[::-1]}
+      for (p, q) in pq:
+        if not (i + p > n or j + q > m or (k and rs[k - 1] in pq)):
           r = (i, j, p, q)
           if overlap(r, ps) == -1:
             # and try to place the remaining rectangles
