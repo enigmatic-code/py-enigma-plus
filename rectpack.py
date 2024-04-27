@@ -35,8 +35,7 @@ def overlap(r, ps):
 # n, m = the dimensions of the grid
 # rs = dimensions of the rectangles [(w, h), ...]
 # (ps = positions of the rectangles [(x, y, w, h), ...])
-# (pr = size and position of previous packed rectangle)
-def pack_loose(n, m, rs, ps=[], pr=None):
+def pack_loose(n, m, rs, ps=[]):
   # are we done?
   if not rs:
     yield ps
@@ -44,7 +43,11 @@ def pack_loose(n, m, rs, ps=[], pr=None):
     # try to fit the next rectangle into the grid
     r = rs[0]
     pq = {r, r[::-1]}
-    ij = (pr[1] if pr and pr[0] in pq else (0, 0))
+    ij = (0, 0)
+    if ps:
+      # if we are a duplicate rectangle start from previous position
+      (i, j, p, q) = ps[-1]
+      if (p, q) in pq: ij = (i + p, j)
     for (p, q) in pq:
       (i, j) = ij
       # consider possible locations for the rectangle
@@ -58,7 +61,7 @@ def pack_loose(n, m, rs, ps=[], pr=None):
         k = overlap(r, ps)
         if k == -1:
           # try to place the remaining rectangles
-          for z in pack_loose(n, m, rs[1:], ps + [r], ((p, q), (i + p, j))): yield z
+          for z in pack_loose(n, m, rs[1:], ps + [r]): yield z
           i += 1
         else:
           (x, y, w, h) = ps[k]
@@ -72,11 +75,9 @@ def empty(n, m, ps, i=0, j=0):
       i %= n
     if j >= m: break
     k = overlap((i, j, 1, 1), ps)
-    if k == -1:
-      return (i, j)
-    else:
-      (x, y, w, h) = ps[k]
-      i = x + w
+    if k == -1: return (i, j)
+    (x, y, w, h) = ps[k]
+    i = x + w
 
 # fit the rectangles <rs> into an <n> x <m> grid (tight packing)
 # n, m = the dimensions of the grid
@@ -99,7 +100,7 @@ def pack_tight(n, m, rs, ps=[], i=0, j=0):
             # and try to place the remaining rectangles
             for z in pack_tight(n, m, rs[:k] + rs[k + 1:], ps + [r], i + p, j): yield z
 
-def pack(n, m, rs, packer=pack_tight, order=by_area):
+def pack(n, m, rs, packer=pack_tight, order=by_area, ps=None):
   # do some quick checks to look for impossible scenarios
   # total area
   if sum(w * h for (w, h) in rs) > n * m: return ()
@@ -114,7 +115,7 @@ def pack(n, m, rs, packer=pack_tight, order=by_area):
   # determine the packer
   if not callable(packer): packer = globals().get(packer)
   # do the packing
-  return packer(n, m, rs)
+  return packer(n, m, rs, ps=(ps if ps else list()))
 
 # reflect a solution about vertical / horizontal axis
 soln = lambda s: tuple(sorted(s))
