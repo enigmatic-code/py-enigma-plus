@@ -16,7 +16,7 @@ from enigma import (irange, unpack, uniq, join, printf)
 
 # sort rectangles <rs> by area (default = largest to smallest)
 def by_area(rs, reverse=0):
-  return sorted(rs, key=unpack(lambda w, h: w * h), reverse=(not reverse))
+  return sorted(rs, key=unpack(lambda w, h: (w * h, max(w, h))), reverse=(not reverse))
 
 # by_area -> smallest to largest, largest to smallest
 by_area_stol = lambda rs: by_area(rs, reverse=1)
@@ -32,19 +32,22 @@ def overlap(r, ps):
   return -1
 
 # fit the rectangles <rs> into a <n> x <m> grid (loose packing)
-# n, m - the dimensions of the grid
-# rs - dimensions of the rectangles [(w, h), ...]
-# ps - positions of the rectangles [(x, y, w, h), ...]
-def pack_loose(n, m, rs, ps=[]):
+# n, m = the dimensions of the grid
+# rs = dimensions of the rectangles [(w, h), ...]
+# (ps = positions of the rectangles [(x, y, w, h), ...])
+# (pr = size and position of previous packed rectangle)
+def pack_loose(n, m, rs, ps=[], pr=None):
   # are we done?
   if not rs:
     yield ps
   else:
     # try to fit the next rectangle into the grid
     r = rs[0]
-    for (p, q) in {r, r[::-1]}:
+    pq = {r, r[::-1]}
+    ij = (pr[1] if pr and pr[0] in pq else (0, 0))
+    for (p, q) in pq:
+      (i, j) = ij
       # consider possible locations for the rectangle
-      i = j = 0
       while True:
         if i + p > n:
           i = 0
@@ -55,7 +58,7 @@ def pack_loose(n, m, rs, ps=[]):
         k = overlap(r, ps)
         if k == -1:
           # try to place the remaining rectangles
-          for z in pack_loose(n, m, rs[1:], ps + [r]): yield z
+          for z in pack_loose(n, m, rs[1:], ps + [r], ((p, q), (i + p, j))): yield z
           i += 1
         else:
           (x, y, w, h) = ps[k]
