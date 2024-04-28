@@ -160,10 +160,12 @@ def make_grid(n, m, ps):
   return g
 
 # output a packed <n> x <m> grid (either from <ps> or <g>)
-def output_grid(n, m, ps=None, g=None):
+def output_grid(n, m, ps=None, g=None, start=None, end=None):
   if g is None: g = make_grid(n, m, ps)
   # output the packing
   k = max(max(r) for r in g)
   z = len(str(k))
+  if start is not None: printf("{start}")
   for r in g:
     printf("[ {r} ]", r=join((str(x or 0).zfill(z) for x in r), sep=' '))
+  if end is not None: printf("{end}")
