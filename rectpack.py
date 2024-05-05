@@ -12,17 +12,35 @@ from __future__ import print_function
 # of the rectangle (which may be in a different orientation to the
 # corresponding input rectangle)
 
-from enigma import (module, irange, unpack, uniq, join, printf)
+from enigma import (module, irange, multiset, ordered, unpack, uniq, join, printf)
+
+__author__ = "Jim Randell <jim.randell@gmail.com>"
+__version__ = "2024-04-28"
 
 rectpack = module(__name__)
 
+# normalise rectangle -> (<larger dimension>, <smaller dimension>)
+def normalise(r):
+  (w, h) = r
+  return ((h, w) if h > w else r)
+
 # sort rectangles <rs> by area (default = largest to smallest)
+# repeated shapes will be clumped together
 def by_area(rs, reverse=0):
-  return sorted(rs, key=unpack(lambda w, h: (w * h, max(w, h))), reverse=(not reverse))
+  return sorted(map(normalise, rs), key=unpack(lambda w, h: (w * h, max(w, h))), reverse=(not reverse))
 
 # by_area -> smallest to largest, largest to smallest
 by_area_stol = lambda rs: by_area(rs, reverse=1)
 by_area_ltos = by_area
+
+# sort rectangles <rs> by dimension (default = largest to smallest)
+# repeated shapes will be clumped together
+def by_dim(rs, reverse=0):
+  return sorted(map(normalise, rs), key=unpack(lambda w, h: (max(w, h), w * h)), reverse=(not reverse))
+
+# by_dim -> smallest to largest, largest to smallest
+by_dim_stol = lambda rs: by_dim(rs, reverse=1)
+by_dim_ltos = by_dim
 
 # determine if rectangle <r> overlaps with a rectangle in <ps>
 # return the index in <rs> of an overlapping rectangle, or -1
@@ -103,6 +121,38 @@ def pack_tight(n, m, rs, ps=[], i=0, j=0):
             # and try to place the remaining rectangles
             for z in pack_tight(n, m, rs[:k] + rs[k + 1:], ps + [r], i + p, j): yield z
 
+# pack rectangles with repeated shapes
+# n, m = dimensions of grid
+# rs = different rectangle shapes (and order)
+# qs = multiset of quantities
+def _mpack_tight(n, m, rs, qs, ps=[], i=0, j=0):
+  # are we done?
+  if not qs:
+    yield ps
+  else:
+    # find an empty square
+    (i, j) = empty(n, m, ps, i, j)
+    # fit one of the remaining rectangles there
+    for (k, r) in enumerate(rs):
+      for (p, q) in {r, r[::-1]}:
+        if not (i + p > n or j + q > m):
+          x = (i, j, p, q)
+          if overlap(x, ps) == -1:
+            # try to place the remaining rectangles
+            qs_ = qs.copy().remove(r)
+            rs_ = (rs if r in qs_ else rs[:k] + rs[k + 1:])
+            for z in _mpack_tight(n, m, rs_, qs_, ps + [x], i + p, j): yield z
+
+# pack rectangles with repeated shapes
+def mpack_tight(n, m, rs, ps=[], i=0, j=0):
+  # collect rectangles by shape
+  (ks, qs) = (list(), multiset())
+  for r in rs:
+    r = normalise(r)
+    qs.add(r)
+    if not (ks and ks[-1] == r): ks.append(r)
+  return _mpack_tight(n, m, ks, qs, ps, i, j)
+
 def pack(n, m, rs, packer=pack_tight, order=by_area, ps=None):
   # do some quick checks to look for impossible scenarios
   # total area
@@ -118,7 +168,8 @@ def pack(n, m, rs, packer=pack_tight, order=by_area, ps=None):
   # determine the packer
   if not callable(packer): packer = globals().get(packer)
   # do the packing
-  return packer(n, m, rs, ps=(ps if ps else list()))
+  if ps is None: ps = list()
+  return packer(n, m, rs, ps=ps)
 
 # reflect a solution about vertical / horizontal axis
 soln = lambda s: tuple(sorted(s))
