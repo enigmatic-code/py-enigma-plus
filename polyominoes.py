@@ -324,10 +324,45 @@ if enigma._namecheck(__name__):
 
   r = arg("D", 0)
 
+  if r == "G":
+    vs = args(["*"], 1)
+
+    # a grid of characters
+    class Grid(object):
+      def __init__(self):
+        self.X = 0
+        self.Y = 0
+        self.lines = list()
+      def place(self, xys, dx=0, dy=0, c='O'):
+        for (x, y) in xys:
+          x += dx
+          y += dy
+          while y >= self.Y:
+            self.lines.append([' '] * self.X)
+            self.Y += 1
+          while x >= len(self.lines[y]):
+            self.lines[y].append(' ')
+            if x > self.X: self.X = x
+          self.lines[y][x] = c
+      def display(self, pre="", post="", start=None, end=None):
+        if start is not None: printf("{start}")
+        for r in g.lines[::-1]:
+          printf("{pre}{r}{post}", r=str.join('', r))
+        if end is not None: printf("{end}")
+
+    populate([1, 2, 3, 4, 5, 6])
+    if vs == ['*']: vs = list(polyominoes.keys())
+    for (v, ps) in zip(vs, shapes(vs)):
+      printf("\"{v}\" [{n} orientations]", n=len(ps))
+      g = Grid()
+      for xys in ps:
+        g.place(xys, dx=(g.X + 6 if g.X else 0))
+      g.display(start="", end="\n")
+
+
   if r == "F":
     vs = args(["F5"], 1)
     printf("# [F] compute shape data: {vs}\n", vs=join(vs, sep=" "))
-    ps = shapes(vs)
     for (v, p) in zip(vs, shapes(vs)):
       printf('"{v}": (')
       orientations(p[0], verbose=1, indent="  ")
