@@ -5,6 +5,11 @@ from __future__ import print_function
 
 from enigma import (basestring, exact_cover, irange, unpack, peek, join, printf)
 
+# routines for handling polyiamonds
+
+__author__ = "Jim Randell <jim.randell@gmail.com>"
+__version__ = "2022-11-12"
+
 # polyiamonds:
 #
 # the grid is layed out as follows:
