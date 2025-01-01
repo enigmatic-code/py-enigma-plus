@@ -3,6 +3,11 @@
 
 from enigma import (enigma, algorithmX, seq_all_same_r, basestring, chunk, unpack, join, arg, args, printf)
 
+# routines for handling polyominoes
+
+__author__ = "Jim Randell <jim.randell@gmail.com>"
+__version__ = "2024-07-01"
+
 # shapes have 8 possible orientations
 
 # R0 = rotated 0 degrees
@@ -352,12 +357,12 @@ if enigma._namecheck(__name__):
 
     populate([1, 2, 3, 4, 5, 6])
     if vs == ['*']: vs = list(polyominoes.keys())
-    for (v, ps) in zip(vs, shapes(vs)):
+    for (v, ps) in zip(vs, shapes(vs)): # flags="ONE_SIDED"
       printf("\"{v}\" [{n} orientations]", n=len(ps))
       g = Grid()
       for xys in ps:
         g.place(xys, dx=(g.X + 6 if g.X else 0))
-      g.display(start="", end="\n")
+      g.display(pre="  ", start="", end="\n")
 
 
   if r == "F":
