@@ -50,23 +50,3 @@ def is_isomorphic(adj1, adj2):
     adj3 = dict((m[k], set(m[v] for v in vs)) for (k, vs) in adj1.items())
     # is it the same as adj2?
     if adj3 == adj2: return m
-
-  return
-
-
-if __name__ == '__main__':
-
-  g1 = [(1, 2), (2, 6), (6, 3), (3, 4), (4, 5), (5, 1), (2, 4)]
-  g2 = [(1, 2), (2, 3), (3, 4), (4, 6), (6, 5), (5, 1), (2, 4)]
-  #g1 = [(1, 2), (2, 3), (3, 4), (4, 6), (6, 5), (5, 1), (1, 6)]
-
-  r = is_isomorphic(edges2adj(g1), edges2adj(g2))
-  print(r)
-
-  g1 = {1: {2, 5}, 2: {1, 3, 4}, 5: {1, 6}, 3: {2, 4}, 4: {2, 3, 6}, 6: {4, 5}}
-  g2 = {4: {2, 3, 6}, 6: {3, 4}, 3: {4, 5, 6}, 2: {1, 4}, 1: {2, 5}, 5: {1, 3}}
-
-  r = is_isomorphic(g1, g2)
-  print(r)
-
-
