@@ -3,18 +3,23 @@
 
 from __future__ import print_function
 
-# 
-
-from enigma import (
-  enigma, irange, inf, is_square, sqrtf, sqrtc, mgcd, div, divc, multiply,
-  prime_factor, divisors_pairs, uniq1, sq, as_int, cache, printf,
-)
-
-verbose = ('v' in enigma._PY_ENIGMA)
-
+# solving Pell type equations via continued fractions
+#
 # See:
 # [ https://en.wikipedia.org/wiki/Pell%27s_equation ]
 # [ "Solving the generalized Pell equation x^2 − D.y^2 = N", John P. Robertson, 2004 ]
+
+from enigma import (
+  enigma, irange, inf, is_square, sqrtf, sqrtc, mgcd, div, divc, multiply,
+  prime_factor, divisors_pairs, uniq1, sq, merge, as_int, cache, printf,
+)
+
+__author__ = "Jim Randell <jim.randell@gmail.com>"
+__version__ = "2025-06-12"
+
+verbose = ('v' in enigma._PY_ENIGMA)
+
+######################################################################
 
 # simple continued fractions:
 
@@ -54,6 +59,7 @@ def cf_convergents(cf):
     (p0, q0, p, q) = (p, q, a * p + p0, a * q + q0)
     yield (p, q)
 
+######################################################################
 
 # solve Pell's equations using continued fractions:
 
@@ -98,11 +104,6 @@ def pells1n(D):
     yield (x, y)
     (x, y) = (A * x + B * y, A * y + C * x)
 
-# merge solution families
-def merge_sols(ss):
-  from heapq import merge
-  return uniq1(merge(*ss))
-
 # generate a solution family based on D, (x, y), (u, v)
 def pells_sol(D, xy, uv):
   ((x, y), (u, v)) = (xy, uv)
@@ -138,7 +139,7 @@ def pells(D, N):
       if (X, Y) != (x, y):
         sols.append(pells_sol(D, (X, Y), (u, v)))
 
-  return merge_sols(sols)
+  return merge(sols)
 
 ######################################################################
 
@@ -211,6 +212,8 @@ def diop_quad(a, b, c, maxC=10000, validate=0):
       if X is not None: yield (X, Y)
       if i == maxC: printf("diop_quad: WARNING: terminating search (after {maxC} candidates)"); break
   return _fn()
+
+######################################################################
 
 if enigma._namecheck(__name__):
   from enigma import (arg, number as num)
