@@ -15,7 +15,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2025-06-12"
+__version__ = "2025-06-13"
 
 verbose = ('v' in enigma._PY_ENIGMA)
 
@@ -139,7 +139,7 @@ def pells(D, N):
       if (X, Y) != (x, y):
         sols.append(pells_sol(D, (X, Y), (u, v)))
 
-  return merge(sols)
+  return merge(sols, uniq=1)
 
 ######################################################################
 
