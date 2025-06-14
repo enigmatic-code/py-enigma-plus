@@ -1,9 +1,14 @@
 #! python3
 # -*- mode: Python; py-indent-offset: 2; -*-
 
-from enigma import (enigma, algorithmX, seq_all_same_r, basestring, chunk, unpack, join, arg, args, printf)
-
 # routines for handling polyominoes
+
+from __future__ import print_function
+
+from enigma import (
+  enigma, algorithmX, seq_all_same_r, basestring, chunk, unpack, join,
+  arg, args, printf
+)
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
 __version__ = "2024-07-01"
