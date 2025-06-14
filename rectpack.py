@@ -1,8 +1,6 @@
 #! python3
 # -*- mode: Python; py-indent-offset: 2; -*-
 
-from __future__ import print_function
-
 # routines for packing rectangles
 #
 # rectangles are represented by (w, h) dimensions
@@ -12,6 +10,7 @@ from __future__ import print_function
 # of the rectangle (which may be in a different orientation to the
 # corresponding input rectangle)
 
+from __future__ import print_function
 from enigma import (module, irange, multiset, ordered, unpack, uniq, join, printf)
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
@@ -160,7 +159,7 @@ def pack(n, m, rs, packer=pack_tight, order=by_area, ps=None):
   # check all rectangles fit in the grid
   (dmin, dmax) = sorted([n, m])
   if any(max(r) > dmax or min(r) > dmin for r in rs): return ()
-  # stack rectangles with min dimension > 1/2 min dimension of grid [suggested by frits]
+  # stack rectangles with min dimension > 1/2 min dimension of grid [suggested by Frits]
   if sum(x for x in map(min, rs) if 2 * x > dmin) > dmax: return ()
   # order the rectangles (if required)
   if not callable(order): order = globals().get(order)
