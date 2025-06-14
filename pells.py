@@ -1,13 +1,13 @@
 #! python3
 # -*- mode: Python; python-indent-offset: 2; coding: utf-8 -*-
 
-from __future__ import print_function
-
 # solving Pell type equations via continued fractions
 #
 # See:
 # [ https://en.wikipedia.org/wiki/Pell%27s_equation ]
 # [ "Solving the generalized Pell equation x^2 − D.y^2 = N", John P. Robertson, 2004 ]
+
+from __future__ import print_function
 
 from enigma import (
   enigma, irange, inf, is_square, sqrtf, sqrtc, mgcd, div, divc, multiply,
