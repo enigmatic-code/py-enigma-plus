@@ -1,11 +1,11 @@
 #! python3
 # -*- mode: Python; python-indent-offset: 2; coding: utf-8 -*-
 
+# routines for dealing with (simple undirected) graphs
+
 from __future__ import print_function
 
 from enigma import (namedtuple, static, group, cproduct, subsets)
-
-# routines for dealing with (simple undirected) graphs
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
 __version__ = "2024-12-31"
