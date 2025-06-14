@@ -11,7 +11,10 @@
 # corresponding input rectangle)
 
 from __future__ import print_function
-from enigma import (module, irange, multiset, ordered, unpack, uniq, join, printf)
+
+from enigma import (
+  module, irange, multiset, ordered, unpack, uniq, join, printf
+)
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
 __version__ = "2024-04-28"
