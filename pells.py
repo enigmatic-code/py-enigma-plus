@@ -76,7 +76,7 @@ def pells1(D, trivial=1):
   # find the fundamental solution
   (x, y) = (x1, y1) = pells1_fundamental(D)
   (A, B, C) = (x1, D * y1, y1)
-  if verbose: printf("[x^2 - {D}y^2 = 1] -> (x', y') = ({A}x + {B}y, {C}x + {A}y); (x1, y1) = ({x1}, {y1})")
+  if verbose: printf("[pells] [x^2 - {D}y^2 = 1] (x', y') = ({A}x + {B}y, {C}x + {A}y); (x1, y1) = ({x1}, {y1})")
   # generate all solutions
   while 1:
     yield (x, y)
@@ -99,7 +99,7 @@ def pells1n(D):
   (x, y) = (x1, y1) = s
   # generate all solutions
   (A, B, C) = (x1 * x1 + D * y1 * y1, 2 * D * x1 * y1, 2 * x1 * y1)
-  if verbose: printf("[x^2 - {D}y^2 = -1] -> (x', y') = ({A}x + {B}y, {C}x + {A}y); (x1, y1) = ({x1}, {y1})")
+  if verbose: printf("[pells] [x^2 - {D}y^2 = -1] (x', y') = ({A}x + {B}y, {C}x + {A}y); (x1, y1) = ({x1}, {y1})")
   while 1:
     yield (x, y)
     (x, y) = (A * x + B * y, A * y + C * x)
@@ -108,7 +108,7 @@ def pells1n(D):
 def pells_sol(D, xy, uv):
   ((x, y), (u, v)) = (xy, uv)
   (A, B, C) = (u, D * v, v)
-  if verbose: printf("[x^2 - {D}y^2 = {N}] -> (x', y') = ({A}x + {B}y, {C}x + {A}y); (x1, y1) = ({x}, {y})", N=sq(x) - D * sq(y))
+  if verbose: printf("[pells] [x^2 - {D}y^2 = {N}] (x', y') = ({A}x + {B}y, {C}x + {A}y); (x1, y1) = ({x}, {y})", N=sq(x) - D * sq(y))
   while 1:
     yield (x, y)
     (x, y) = (A * x + B * y, C * x + A * y)
