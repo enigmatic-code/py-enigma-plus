@@ -1,12 +1,12 @@
 #! python3
-# -*- mode: Python; py-indent-offset: 2; -*-
+# -*- mode: Python; python-indent-offset: 2; coding: utf-8 -*-
 
 # routines for handling polyiamonds
 
 from __future__ import print_function
 
 from enigma import (
-  basestring, exact_cover, irange, unpack, peek, join, printf
+  enigma, basestring, exact_cover, irange, unpack, peek, join, printf
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
@@ -35,7 +35,7 @@ __version__ = "2022-11-12"
 (M0, M1, M2, M3, M4, M5) = (64, 128, 256, 512, 1024, 2048)
 
 # precalculated polyiamonds (can also be generated from prototypes)
-polyiamonds = {}
+polyiamonds_data = dict()
 
 # prototypes of convex polyiamonds that fit in a 24-hex grid
 protos = {
@@ -94,7 +94,7 @@ def make_shape(name, proto=None):
   name = akas.get(name, name)
   if proto is None: proto = protos[name]
   v = orientations(proto, verbose=0)
-  polyiamonds[name] = v
+  polyiamonds_data[name] = v
   return v
 
 # collect pieces using the names in ps
@@ -107,7 +107,7 @@ def shapes(ps, flags="ALL", as_map=1):
   s = list()
   for p in ps:
     p = akas.get(p, p)
-    v = polyiamonds.get(p)
+    v = polyiamonds_data.get(p)
     if v is None: v = make_shape(p)
     s.append(list(x for (x, f) in v if f & flags))
   return (dict(zip(ps, s)) if as_map else s)
