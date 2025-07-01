@@ -1,5 +1,5 @@
 #! python3
-# -*- mode: Python; py-indent-offset: 2; -*-
+# -*- mode: Python; python-indent-offset: 2; coding: utf-8 -*-
 
 # routines for handling polyominoes
 
@@ -12,6 +12,8 @@ from enigma import (
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
 __version__ = "2024-07-01"
+
+polyominoes = enigma.module(__name__)
 
 # shapes have 8 possible orientations
 
@@ -26,7 +28,7 @@ __version__ = "2024-07-01"
 (R0, R1, R2, R3, M0, M1, M2, M3) = (1, 2, 4, 8, 16, 32, 64, 128)
 
 # shape data
-polyominoes = dict()
+polyominoes_data = dict()
 
 # polyomino templates
 template = dict()
@@ -130,11 +132,11 @@ def populate(ks):
           if c != ' ': ps.append((x, y))
       assert len(ps) == k
       # populate the orientations
-      polyominoes[n] = orientations(ps)
+      polyominoes_data[n] = orientations(ps)
       # and the mirror image for chiral shapes
       if f:
         ps = list((w - x, y) for (x, y) in ps)
-        polyominoes[n + "'"] = orientations(ps)
+        polyominoes_data[n + "'"] = orientations(ps)
     populated.add(k)
 
 # aka names, map aka -> polyomino name
@@ -165,13 +167,13 @@ def shapes(ps, flags="ALL", as_map=0):
   flags = shape_flags.get(flags, flags)
   s = list()
   for p in ps:
-    s.append(list(x for (x, f) in polyominoes[akas.get(p, p)] if f & flags))
+    s.append(list(x for (x, f) in polyominoes_data[akas.get(p, p)] if f & flags))
   return (dict(zip(ps, s)) if as_map else s)
 
 # look up polyomino names from shape orientations
 def names(ss, flags="ALL"):
   flags = shape_flags.get(flags, flags)
-  for (k, v) in polyominoes.items():
+  for (k, v) in polyominoes_data.items():
     v = list(x for (x, f) in v if f & flags)
     if v in ss: yield k
 
@@ -222,7 +224,7 @@ def orientations(ss, flags="ALL", verbose=0, indent=""):
 def extend(d):
   assert 0, "DEPRECATED!"
   for (k, v) in d.items():
-    polyominoes[k] = orientations(v)
+    polyominoes_data[k] = orientations(v)
 
 # generate placements for piece <p> in an <x> x <y> grid, avoiding <holes>
 # <p> is a sequence of possible orientations for the piece
@@ -361,7 +363,7 @@ if enigma._namecheck(__name__):
         if end is not None: printf("{end}")
 
     populate([1, 2, 3, 4, 5, 6])
-    if vs == ['*']: vs = list(polyominoes.keys())
+    if vs == ['*']: vs = list(polyominoes_data.keys())
     for (v, ps) in zip(vs, shapes(vs)): # flags="ONE_SIDED"
       printf("\"{v}\" [{n} orientations]", n=len(ps))
       g = Grid()
