@@ -5,10 +5,12 @@
 
 from __future__ import print_function
 
-from enigma import (namedtuple, static, group, cproduct, subsets)
+from enigma import (enigma, namedtuple, static, group, cproduct, subsets)
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
 __version__ = "2024-12-31"
+
+graph = enigma.module(__name__)
 
 # edges -> adjacency matrix
 def edges2adj(es, vs=()):
