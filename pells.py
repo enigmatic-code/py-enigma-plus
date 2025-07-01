@@ -17,6 +17,7 @@ from enigma import (
 __author__ = "Jim Randell <jim.randell@gmail.com>"
 __version__ = "2025-06-13"
 
+pells = enigma.module(__name__)
 verbose = ('v' in enigma._PY_ENIGMA)
 
 ######################################################################
@@ -114,7 +115,7 @@ def pells_sol(D, xy, uv):
     (x, y) = (A * x + B * y, C * x + A * y)
 
 # X^2 - D.Y^2 = N [D > 0, non-square; N != 0]
-def pells(D, N):
+def pellsN(D, N):
   # find the fundamental solution to the resolvant: X^2 - D.Y^2 = 1
   (u, v) = pells1_fundamental(D)
 
@@ -184,7 +185,7 @@ def _diop_quad_d2(d, N):
 def _diop_pells(D, N):
   if N == 1: return pells1(D)
   if N == -1: return pells1n(D)
-  return pells(D, N)
+  return pellsN(D, N)
 
 # X^2 - D.Y^2 = N [D > 0; N != 0]
 def _diop_quad_a1(D, N):
@@ -208,6 +209,7 @@ def diop_quad(a, b, c, maxC=10000, validate=0):
   r = is_square(m * a)
   def _fn():
     for (i, (X, Y)) in enumerate(_diop_quad_a1(m * -b, m * c), start=1):
+      #printf("[diop_quad: considering: X={X} Y={Y}]")
       X = div(X, r)
       if X is not None: yield (X, Y)
       if i == maxC: printf("diop_quad: WARNING: terminating search (after {maxC} candidates)"); break
