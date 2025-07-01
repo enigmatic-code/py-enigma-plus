@@ -1,5 +1,5 @@
 #! python3
-# -*- mode: Python; py-indent-offset: 2; -*-
+# -*- mode: Python; python-indent-offset: 2; coding: utf-8 -*-
 
 # routines for packing rectangles
 #
