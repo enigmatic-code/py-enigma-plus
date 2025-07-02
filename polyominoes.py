@@ -11,7 +11,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2024-07-01"
+__version__ = "2025-07-01"
 
 polyominoes = enigma.module(__name__)
 
