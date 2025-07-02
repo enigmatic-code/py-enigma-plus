@@ -17,7 +17,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2024-04-28"
+__version__ = "2025-07-01"
 
 rectpack = module(__name__)
 
