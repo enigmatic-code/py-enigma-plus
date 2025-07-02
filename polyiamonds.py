@@ -10,7 +10,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2022-11-12"
+__version__ = "2025-07-01"
 
 # polyiamonds:
 #
