@@ -15,7 +15,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2025-06-13"
+__version__ = "2025-07-01"
 
 pells = enigma.module(__name__)
 verbose = ('v' in enigma._PY_ENIGMA)
@@ -196,7 +196,7 @@ def _diop_quad_a1(D, N):
 # results (X, Y) for increasing X
 def diop_quad(a, b, c, maxC=10000, validate=0):
   if validate: (a, b, c) = map(as_int, (a, b, c))
-  if a == 0 or b == 0: raise ValueError("diop_linear: invalid equation")
+  if a == 0 or b == 0: raise ValueError("diop_quad: invalid equation")
   if a < 0: (a, b, c) = (-a, -b, -c)
   g = mgcd(a, b, c)
   if g > 1: (a, b, c) = (a // g, b // g, c // g)
