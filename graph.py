@@ -8,7 +8,7 @@ from __future__ import print_function
 from enigma import (enigma, namedtuple, static, group, cproduct, subsets)
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2024-12-31"
+__version__ = "2025-07-01"
 
 graph = enigma.module(__name__)
 
