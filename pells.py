@@ -10,12 +10,12 @@
 from __future__ import print_function
 
 from enigma import (
-  enigma, irange, inf, is_square, sqrtf, sqrtc, mgcd, div, divc, multiply,
-  prime_factor, divisors_pairs, uniq1, sq, merge, as_int, cache, printf,
+  enigma, irange, inf, is_square, sqrtf, sqrtc, gcd, div, divf, divc, multiply,
+  prime_factor, divisors_pairs, sq, merge, as_int, cache, printf,
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2025-07-01"
+__version__ = "2025-07-02"
 
 pells = enigma.module(__name__)
 verbose = ('v' in enigma._PY_ENIGMA)
@@ -63,6 +63,7 @@ def cf_convergents(cf):
 ######################################################################
 
 # solve Pell's equations using continued fractions:
+# (only non-negative (X, Y) solutions are generated)
 
 # find the fundamental solution for: X^2 - D.Y^2 = 1
 def pells1_fundamental(D):
@@ -71,7 +72,7 @@ def pells1_fundamental(D):
     if p * p - D * q * q == 1:
       return (p, q)
 
-# find all (non-negative) (X, Y) solutions
+# find all (X, Y) solutions for: X^2 - D.Y^2 = 1
 def pells1(D, trivial=1):
   if trivial: yield (1, 0)  # trivial solution
   # find the fundamental solution
@@ -83,7 +84,7 @@ def pells1(D, trivial=1):
     yield (x, y)
     (x, y) = (A * x + B * y, A * y + C * x)
 
-# X^2 - D.Y^2 = -1 [D > 0, non-square]
+# find fundamental solution for: X^2 - D.Y^2 = -1 [D > 0, non-square]
 def pells1n_fundamental(D):
   cf = cf_sqrt(D)
   # must have an odd period
@@ -93,6 +94,7 @@ def pells1n_fundamental(D):
     if p * p - D * q * q == -1:
       return (p, q)
 
+# find all (X, Y) solutions for: X^2 - D.Y^2 = -1
 def pells1n(D):
   # find the fundamental solution
   s = pells1n_fundamental(D)
@@ -114,14 +116,13 @@ def pells_sol(D, xy, uv):
     yield (x, y)
     (x, y) = (A * x + B * y, C * x + A * y)
 
-# X^2 - D.Y^2 = N [D > 0, non-square; N != 0]
+# find all (X, Y) solutions for: X^2 - D.Y^2 = N [D > 0, non-square; N != 0]
 def pellsN(D, N):
   # find the fundamental solution to the resolvant: X^2 - D.Y^2 = 1
   (u, v) = pells1_fundamental(D)
 
   # the brute force approach is probably OK for now,
   # but there are more sophisticated approaches [see: LMM algorithm]
-
   if N > 0:
     (a, b) = (0, sqrtf(divc(N * (u - 1), 2 * D)))
   else:
@@ -158,13 +159,46 @@ def _diop_quad_c0(a, b):
     yield (t * b, t * a)
 
 # a.X^2 + b.Y^2 = c [a > 0, b > 0, c > 0]
-def _diop_quad_bp(a, b, c):
-  for X in irange(0, inf):
+def _diop_quad_bp_old(a, b, c):
+  # a brute force search
+  X = 0
+  while True:
     r = c - a * X * X
     if r < 0: break
-    Y = is_square(div(r, b))
-    if Y is None: continue
-    yield (X, Y)
+    (Y2, z) = divmod(r, b)
+    if z == 0:
+      Y = sqrtf(Y2)
+      if Y * Y == Y2: yield (X, Y)
+    X += 1
+
+# a.X^2 + b.Y^2 = c [a > 0, b > 0, c > 0]
+def _diop_quad_bp_new(a, b, c):
+  # start by considering possible Y values
+  Y0 = sqrtf(divf(c, b))
+  Y1 = sqrtc(divc(a * c, b * (a + b)))
+  #printf("Y = [{Y0}, {Y1}]")
+  X = None
+  for Y in irange(Y0, Y1, step=-1):
+    r = c - b * Y * Y
+    (X2, z) = divmod(r, a)
+    if z == 0:
+      X = sqrtf(X2)
+      if X * X == X2: yield (X, Y)
+  # and then consider possible X values
+  if X is None:
+    X = sqrtf(divf(b * c, a * (a + b)))
+  else:
+    X += 1
+  while True:
+    r = c - a * X * X
+    if r < 0: break
+    (Y2, z) = divmod(r, b)
+    if z == 0:
+      Y = sqrtf(Y2)
+      if Y * Y == Y2: yield (X, Y)
+    X += 1
+
+_diop_quad_bp = _diop_quad_bp_new
 
 # X^2 - (dY)^2 = N [d > 0, N != 0]
 def _diop_quad_d2(d, N):
@@ -193,12 +227,17 @@ def _diop_quad_a1(D, N):
   if d is not None: return _diop_quad_d2(d, N)
   return _diop_pells(D, N)
 
+def _diop_empty():
+  if 0: yield None
+
 # results (X, Y) for increasing X
 def diop_quad(a, b, c, maxC=10000, validate=0):
   if validate: (a, b, c) = map(as_int, (a, b, c))
   if a == 0 or b == 0: raise ValueError("diop_quad: invalid equation")
   if a < 0: (a, b, c) = (-a, -b, -c)
-  g = mgcd(a, b, c)
+  g = gcd(a, b)
+  if c % g != 0: return _diop_empty()
+  g = gcd(g, c)
   if g > 1: (a, b, c) = (a // g, b // g, c // g)
   if c == 0: return _diop_quad_c0(a, b)
   if b > 0: return _diop_quad_bp(a, b, c)
@@ -220,9 +259,10 @@ def diop_quad(a, b, c, maxC=10000, validate=0):
 if enigma._namecheck(__name__):
   from enigma import (arg, number as num)
 
-  (a, b, c, N) = (arg(-13, 0, num), arg(1, 1, num), arg(4, 2, num), arg(20, 3, num))
+  (a, b, c, N, v) = (arg(-13, 0, num), arg(1, 1, num), arg(4, 2, num), arg(20, 3, num), arg(0, 4, num))
   printf("solving: {a}.X^2 + {b}.Y^2 = {c}")
-  for (i, (X, Y)) in enumerate(diop_quad(a, b, c), start=1):
+  if v: verbose = 1
+  for (i, (X, Y)) in enumerate(diop_quad(a, b, c, validate=1), start=1):
     r = a * X * X + b * Y * Y
     printf("[{i}] X={X} Y={Y} -> {r}")
     if i == N: printf("[first {N} solutions]"); break
