@@ -5,12 +5,16 @@
 
 from __future__ import print_function
 
-from enigma import (enigma, namedtuple, static, group, cproduct, subsets)
+from enigma import (
+  enigma, namedtuple, defaultdict, static, group, cproduct, subsets, is_disjoint, update, fail
+)
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2025-07-01"
+__version__ = "2025-10-27"
 
 graph = enigma.module(__name__)
+
+######################################################################
 
 # edges -> adjacency matrix
 def edges2adj(es, vs=()):
@@ -30,6 +34,10 @@ def adj2edges(adj):
     for y in adj[x]:
       if not (x > y):
         yield (x, y)
+
+######################################################################
+
+# isomoprhisms
 
 # find an isomorphism for graph <adj> to a graph in <adjs>
 # return (<index>, <map>) where <index> is an index into <adjs>
@@ -68,3 +76,44 @@ def find_isomorphism(adj, adjs):
 # check two graphs (adjacency matrix) are isomorphic
 # return a map of nodes in adj1 to nodes in adj2, or None
 def is_isomorphic(adj1, adj2): return find_isomorphism(adj1, [adj2]).map
+
+######################################################################
+
+# matchings
+
+# (k, vs) -> len(vs)
+_key_fn = (lambda k_v: len(k_v[1]))
+
+# remove s -> t from adj
+_adj_remove = lambda adj, s, t: dict((k, vs.difference({t})) for (k, vs) in adj.items() if k != s)
+
+def _matching(adj_xy, adj_yx, d):
+  # are we done?
+  if adj_xy and adj_yx:
+    # find minimal x->y and y->x sets
+    ((x, ys), (y, xs)) = (min(adj.items(), key=_key_fn) for adj in (adj_xy, adj_yx))
+    if not (xs or ys): return
+    # process the smallest choice
+    if len(xs) < len(ys):
+      ys = {y}
+    else:
+      xs = {x}
+    for (x, y) in cproduct([xs, ys]):
+      adj_xy_ = _adj_remove(adj_xy, x, y)
+      adj_yx_ = _adj_remove(adj_yx, y, x)
+      #yield from _matching(adj_xy_, adj_yx_, update(d, [(x, y)]))  # [Python 3]
+      for z in _matching(adj_xy_, adj_yx_, update(d, [(x, y)])): yield z  # [Python 2]
+  elif not (adj_xy or adj_yx):
+    yield d
+
+# find (perfect) matchings in the bipartite graph specified by (x, y) edges
+def find_bipartite_matching(edges):
+  # construct x -> y, y -> x adjacency matrices
+  (adj_xy, adj_yx) = (defaultdict(set), defaultdict(set))
+  for (x, y) in edges:
+    adj_xy[x].add(y)
+    adj_yx[y].add(x)
+  fail(not is_disjoint([adj_xy.keys(), adj_yx.keys()]), "matching: graph is not bipartite")
+  return _matching(adj_xy, adj_yx, dict())
+
+######################################################################
