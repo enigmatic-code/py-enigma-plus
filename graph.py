@@ -10,7 +10,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2025-10-27"
+__version__ = "2025-10-28"
 
 graph = enigma.module(__name__)
 
@@ -79,6 +79,13 @@ def is_isomorphic(adj1, adj2): return find_isomorphism(adj1, [adj2]).map
 
 ######################################################################
 
+# bipartite graphs
+
+# subgraph of (x, y) edges that connect X and Y
+def bipartite_subgraph(edges, X, Y):
+  (X, Y) = (set(X), set(Y))
+  return set((x, y) for (x, y) in edges if x in X and y in Y)
+
 # matchings
 
 # (k, vs) -> len(vs)
@@ -91,7 +98,7 @@ def _matching(adj_xy, adj_yx, d):
   # are we done?
   if adj_xy and adj_yx:
     # find minimal x->y and y->x sets
-    ((x, ys), (y, xs)) = (min(adj.items(), key=_key_fn) for adj in (adj_xy, adj_yx))
+    ((x, ys), (y, xs)) = (min(adj_xy.items(), key=_key_fn), min(adj_yx.items(), key=_key_fn))
     if not (xs or ys): return
     # process the smallest choice
     if len(xs) < len(ys):
@@ -113,7 +120,7 @@ def find_bipartite_matching(edges):
   for (x, y) in edges:
     adj_xy[x].add(y)
     adj_yx[y].add(x)
-  fail(not is_disjoint([adj_xy.keys(), adj_yx.keys()]), "matching: graph is not bipartite")
+  fail(not is_disjoint([adj_xy.keys(), adj_yx.keys()]), "find_bipartite_matching: graph is not bipartite")
   return _matching(adj_xy, adj_yx, dict())
 
 ######################################################################
