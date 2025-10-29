@@ -10,7 +10,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2025-10-28"
+__version__ = "2025-10-29"
 
 graph = enigma.module(__name__)
 
@@ -99,7 +99,7 @@ def _matching(adj_xy, adj_yx, d):
   if adj_xy and adj_yx:
     # find minimal x->y and y->x sets
     ((x, ys), (y, xs)) = (min(adj_xy.items(), key=_key_fn), min(adj_yx.items(), key=_key_fn))
-    if not (xs or ys): return
+    if not (xs and ys): return
     # process the smallest choice
     if len(xs) < len(ys):
       ys = {y}
@@ -114,9 +114,10 @@ def _matching(adj_xy, adj_yx, d):
     yield d
 
 # find (perfect) matchings in the bipartite graph specified by (x, y) edges
-def find_bipartite_matching(edges):
+def find_bipartite_matching(edges, X=None, Y=None):
   # construct x -> y, y -> x adjacency matrices
-  (adj_xy, adj_yx) = (defaultdict(set), defaultdict(set))
+  adj_xy = (dict((k, set()) for k in X) if X else defaultdict(set))
+  adj_yx = (dict((k, set()) for k in Y) if Y else defaultdict(set))
   for (x, y) in edges:
     adj_xy[x].add(y)
     adj_yx[y].add(x)
