@@ -10,7 +10,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2025-10-29"
+__version__ = "2025-10-30"
 
 graph = enigma.module(__name__)
 
@@ -86,6 +86,16 @@ def bipartite_subgraph(edges, X, Y):
   (X, Y) = (set(X), set(Y))
   return set((x, y) for (x, y) in edges if x in X and y in Y)
 
+# construct bipartite adjacency matrices
+def bipartite_edges2adj(edges, X=None, Y=None):
+  adj_xy = (dict((k, set()) for k in X) if X else defaultdict(set))
+  adj_yx = (dict((k, set()) for k in Y) if Y else defaultdict(set))
+  for (x, y) in edges:
+    adj_xy[x].add(y)
+    adj_yx[y].add(x)
+  fail(not is_disjoint([adj_xy.keys(), adj_yx.keys()]), "bipartite_edges2adj: graph is not bipartite")
+  return (adj_xy, adj_yx)
+
 # matchings
 
 # (k, vs) -> len(vs)
@@ -115,13 +125,7 @@ def _matching(adj_xy, adj_yx, d):
 
 # find (perfect) matchings in the bipartite graph specified by (x, y) edges
 def find_bipartite_matching(edges, X=None, Y=None):
-  # construct x -> y, y -> x adjacency matrices
-  adj_xy = (dict((k, set()) for k in X) if X else defaultdict(set))
-  adj_yx = (dict((k, set()) for k in Y) if Y else defaultdict(set))
-  for (x, y) in edges:
-    adj_xy[x].add(y)
-    adj_yx[y].add(x)
-  fail(not is_disjoint([adj_xy.keys(), adj_yx.keys()]), "find_bipartite_matching: graph is not bipartite")
+  (adj_xy, adj_yx) = bipartite_edges2adj(edges, X, Y)
   return _matching(adj_xy, adj_yx, dict())
 
 ######################################################################
