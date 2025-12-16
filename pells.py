@@ -11,11 +11,11 @@ from __future__ import print_function
 
 from enigma import (
   enigma, irange, inf, is_square, sqrtf, sqrtc, gcd, div, divf, divc, multiply,
-  prime_factor, divisors_pairs, sq, merge, as_int, cache, printf,
+  prime_factor, divisors_pairs, sq, rev, merge, as_int, cache, printf,
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2025-07-02"
+__version__ = "2025-12-16"
 
 pells = enigma.module(__name__)
 verbose = ('v' in enigma._PY_ENIGMA)
@@ -127,7 +127,7 @@ def pellsN(D, N):
     (a, b) = (0, sqrtf(divc(N * (u - 1), 2 * D)))
   else:
     (a, b) = (sqrtc(divc(-N, D)), sqrtf(divc(-N * (u + 1), 2 * D)))
-  if b - a > 10000: printf("pells: WARNING: attempting brute force y = [{a} .. {b}]")
+  if verbose or b - a > 100000: printf("pells: attempting brute force y = [{a} .. {b}]")
 
   # find solution families
   sols = list()
@@ -203,14 +203,14 @@ _diop_quad_bp = _diop_quad_bp_new
 # X^2 - (dY)^2 = N [d > 0, N != 0]
 def _diop_quad_d2(d, N):
   if N > 0:
-    pqs = list(divisors_pairs(N))
-    for (p, q) in pqs[::-1]:
+    pqs = rev(divisors_pairs(N))
+    for (p, q) in pqs:
       (X, Y) = (div(p + q, 2), div(q - p, 2 * d))
       if X is not None and Y is not None:
         yield (X, Y)
   else:
-    pqs = list(divisors_pairs(-N))
-    for (p, q) in pqs[::-1]:
+    pqs = rev(divisors_pairs(-N))
+    for (p, q) in pqs:
       (X, Y) = (div(q - p, 2), div(p + q, 2 * d))
       if X is not None and Y is not None:
         yield (X, Y)
@@ -257,14 +257,16 @@ def diop_quad(a, b, c, maxC=10000, validate=0):
 ######################################################################
 
 if enigma._namecheck(__name__):
-  from enigma import (arg, number as num)
+  from enigma import (timer, arg, number as num)
 
   (a, b, c, N, v) = (arg(-13, 0, num), arg(1, 1, num), arg(4, 2, num), arg(20, 3, num), arg(0, 4, num))
   printf("solving: {a}.X^2 + {b}.Y^2 = {c}")
   if v: verbose = 1
+  if verbose: timer.start()
   for (i, (X, Y)) in enumerate(diop_quad(a, b, c, validate=1), start=1):
     r = a * X * X + b * Y * Y
     printf("[{i}] X={X} Y={Y} -> {r}")
     if i == N: printf("[first {N} solutions]"); break
   else:
     printf("[all solutions]")
+  if verbose: timer.stop()
