@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2025-07-02"
+__version__ = "2026-05-04"
 
 #from enigma import (enigma)
 #cube = enigma.module(__name__)
