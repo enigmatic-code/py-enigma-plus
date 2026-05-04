@@ -13,7 +13,7 @@ __version__ = "2025-07-02"
 
 ###############################################################################
 
-# labels for the faces
+# labels for the 6 faces
 face_label = "UDLRFB"
 (U, D, L, R, F, B) = (0, 1, 2, 3, 4, 5)
 
@@ -61,6 +61,14 @@ class Cube(object):
   def __init__(self, faces=(U, D, L, R, F, B), orientations=(0, 0, 0, 0, 0, 0)):
     self.faces = tuple(faces)
     self.orientations = tuple(orientations)
+
+  def print(self):
+    name = self.__class__.__name__
+    fs = "(" + ', '.join(f + "=" + repr(v) for (f, v) in zip("UDLRFB", self.faces)) + ")"
+    os = self.orientations
+    return "{name}[faces={fs}, orientations={os}]".format(name=name, fs=fs, os=os)
+
+  def __repr__(self): return self.print()
 
   # a new cube derived from the old one by applying the specified transformation
   def transform(self, faces, orientations):
