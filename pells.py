@@ -15,7 +15,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-05-14"
+__version__ = "2026-05-15"
 
 pells = enigma.module(__name__)
 verbose = ('v' in enigma._PY_ENIGMA)
@@ -240,8 +240,8 @@ def tonelli_shanks(a, p):
 # now find all solutions to x^2 = a (mod p^k)
 
 # case 1: a and p are coprime (there are at most 4 roots)
-# returns a list of the quadratic residues
-def _sqrtmodp1(a, p, k=1):
+# returns a list of the roots
+def _sqrtmodp1(a, p, k):
   assert a % p != 0
 
   pk = p**k
@@ -286,7 +286,7 @@ def _sqrtmodp2(a, p, k):
   pk = p**k
   a %= pk
 
-  if a == 0: return range(0, pk, p**((n + 1) // 2))
+  if a == 0: return range(0, pk, p**((k + 1) // 2))
 
   m = 0
   while a % p == 0:
@@ -298,12 +298,15 @@ def _sqrtmodp2(a, p, k):
   return (x for r in rs for x in range(r * p**m, pk, p**(k - m)))
 
 # combine the cases
-def sqrtmodp(a, p, k):
+# returns an iterable of roots
+def sqrtmodp(a, p, k=1):
   return (_sqrtmodp1(a, p, k) if a % p != 0 else _sqrtmodp2(a, p, k))
 
 # find square roots of <a> mod <m> (i.e x such that pow(x, 2, m) = a (mod m)
 # fs is (optionally) the prime factorisation of n
+# returns an iterable of roots
 def sqrtmod(a, m, fs=None):
+  if m == 1: return [0]
   # solve for each prime power in the factorisation
   if not fs: fs = multiset.from_pairs(prime_factor(m))
   (roots, ms) = (list(), list())
