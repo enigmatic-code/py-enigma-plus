@@ -47,7 +47,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-05-19"
+__version__ = "2026-05-20"
 
 pells = enigma.module(__name__)
 verbose = ('v' in enigma._PY_ENIGMA)
@@ -170,7 +170,7 @@ def pellsN(D, N):
       if verbose: printf("[pells] switching to simplified LMM (rather then brute force y = [{a} .. {b}])")
       fn = pells_LMMs(D, N, rD)
     else:
-      printf("[pells] switching to LMM (rather than brute force y = [{a} .. {b}])")
+      if verbose: printf("[pells] switching to LMM (rather than brute force y = [{a} .. {b}])")
       fn = pells_LMM(D, N, rD, u, v)
   if not fn:
     if verbose or b - a > pells_threshold: printf("[pells] attempting brute force y = [{a} .. {b}]")
