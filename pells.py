@@ -7,15 +7,47 @@
 # [ https://en.wikipedia.org/wiki/Pell%27s_equation ]
 # [ "Solving the generalized Pell equation x^2 − D.y^2 = N", John P. Robertson, 2004 ]
 
+"""
+The primary interface to this package is:
+
+  diop_quad(a, b, c)
+
+which finds non-negative integer solutions to the equation:
+
+  a.X^2 + b.Y^2 = c
+
+(X, Y) solutions are generated in increasing X order.
+
+the behaviour of the algorithm can be modified with the following variables:
+
+  pells_threshold = threshold at which it switches to using the LMM
+    algorithm to solve the general Pell's equation. Below this a brute
+    force algorithm is used. (default = 100000)
+
+  cornacchia_threshold = threshold at which it switches to Cornacchia's
+    algorithm when a > 0, b > 0, c > 0. Below this value a brute force
+    algorithm is used. (default = 500000)
+
+  diop_quad_threshold = threshold at which candidate solutions are
+    considered exhausted. (default = 10000)
+
+Auxiliary routines which may be useful are:
+
+  sqrtmod(a, m) = calculate modular square roots of <a> mod <m>
+
+  sqrtmodp(a, p, k) = calculate modular square roots of <a> mod <p>^<k>,
+    where <p> is prime.
+"""
+
 from __future__ import print_function
 
 from enigma import (
   enigma, irange, inf, is_square, sqrtf, sqrtc, gcd, div, divf, divc, multiply, invmod,
-  divisors_pairs, sq, rev, merge, multiset, cproduct, crt, as_int, cache, printf,
+  divisors_pairs, sq, rev, uniq, merge, multiset, cproduct, crt, as_int, cache, printf,
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-05-15"
+__version__ = "2026-05-19"
 
 pells = enigma.module(__name__)
 verbose = ('v' in enigma._PY_ENIGMA)
@@ -137,12 +169,16 @@ def pellsN(D, N):
     if N * N < D and rD * rD < D:
       if verbose: printf("[pells] switching to simplified LMM (rather then brute force y = [{a} .. {b}])")
       fn = pells_LMMs(D, N, rD)
+    else:
+      printf("[pells] switching to LMM (rather than brute force y = [{a} .. {b}])")
+      fn = pells_LMM(D, N, rD, u, v)
   if not fn:
     if verbose or b - a > pells_threshold: printf("[pells] attempting brute force y = [{a} .. {b}]")
     fn = pells_BF(D, N, a, b, u, v)
 
   # find solution families
-  sols = (pells_sol(D, (x, y), (u, v)) for (x, y) in fn)
+  sols = (pells_sol(D, xy, (u, v)) for xy in uniq(fn))
+  # merge solutions from all families
   return merge(sols, uniq=1)
 
 # brute force
@@ -152,15 +188,16 @@ def pells_BF(D, N, a, b, u, v):
     if x is not None:
       yield (x, y)
       # find minimal positive equivalent solution for (-x, y)
-      (X, Y) = (x * u - y * v * D, x * v - y * u)
+      (X, Y) = (u * x - D * v * y, v * x - u * y)
       if X < 0: (X, Y) = (-X, -Y)
       if (X, Y) != (x, y):
         yield (X, Y)
 
-# simplified LMM (for N < sqrt(D) and D is not square)
-def pells_LMMs(D, N, rD):
+# simplified LMM (for N^2 < D)
+def pells_LMMs(D, N, rD=None):
+  if rD is None: rD = sqrtf(D)
   fs = dict()
-  for (f, _) in divisors_pairs(N):
+  for (f, _) in divisors_pairs(abs(N)):
     (m, r) = divmod(N, f * f)
     if r == 0:
       fs[m] = f
@@ -168,9 +205,9 @@ def pells_LMMs(D, N, rD):
   while 1:
     for _ in (0, 1):
       a = (P + rD) // Q
+      (G0, G1, B0, B1) = (G1, a * G1 + G0, B1, a * B1 + B0)
       P = a * Q - P
       Q = (D - P * P) // Q
-      (G0, G1, B0, B1) = (G1, a * G1 + G0, B1, a * B1 + B0)
       f = fs.get(G1 * G1 - D * B1 * B1)
       if f is not None:
         yield (f * G1, f * B1)
@@ -179,16 +216,18 @@ def pells_LMMs(D, N, rD):
 ######################################################################
 
 # Tonelli-Shanks algorithm for modular square roots
+# (used in Cornacchia's algorithm, and general LMM algorithm)
 
 # we could use:
-# sqrtmod = lambda a, m, fs=None: enigma.poly_roots_mod.sqrtmod(a, m)
+# [[ sqrtmod = lambda a, m, fs=None: enigma.poly_roots_mod.sqrtmod(a, m) ]]
+# (which saves a lot of coding)
 
 # but the following is more efficient for large numbers (and is based on sympy.ntheory.sqrt_mod_iter)
 
 # we need an efficient factorisation implementation
 prime_factor = enigma.prime_factor
 # although for large numbers we might use:
-# prime_factor = enigma.partial(enigma.prime_factor_h, ps=enigma.primes, end=1000000, mr=1)
+#prime_factor = enigma.partial(enigma.prime_factor_h, ps=enigma.primes, end=1000000, mr=1)
 
 # check for numbers that have modular square roots (i.e. is a quadratic residue)
 # there are several functions that can do this: legendre(), jacobi(), kronecker()
@@ -202,6 +241,7 @@ def legendre(a, p):
   return (-1 if r == p - 1 else r)
 
 # check if a number is a quadratic residue
+# [see also: gmpy2.legendre(), gmpy2.jacobi(), gmpy2.kronecker()]
 qr_check = legendre
 
 # Tonelli-Shanks algorithm for modular square roots
@@ -230,7 +270,7 @@ def tonelli_shanks(a, p):
       d += 1
 
   (A, D, m) = (pow(a, t, p), pow(d, t, p), 0)
-  for i in range(s):
+  for i in irange(s):
     u = (A * pow(D, m, p)) % p
     u = pow(u, 1 << (s - 1 - i), p)
     if u % p == p - 1:
@@ -248,10 +288,10 @@ def _sqrtmodp1(a, p, k):
   a %= pk
   if p == 2:
     if a % 8 != 1: return
-    if k < 4: return list(range(1, pk, 2))
+    if k < 4: return list(irange(1, pk, step=2))
     # hensel lift
     r = 1
-    for n in range(3, k):
+    for n in irange(3, k - 1):
       if ((r*r - a) >> n) & 1:
         r += 1 << (n - 1)
     h = r + (1 << (k - 1))
@@ -270,7 +310,7 @@ def _sqrtmodp1(a, p, k):
   if k > 1:
     # hensel lift
     px = p
-    for _ in range(k.bit_length() - 1):
+    for _ in irange(k.bit_length() - 1):
       px *= px
       r = (r - (r*r - a) * invmod(2*r, px)) % px
     if k & (k - 1):
@@ -286,7 +326,7 @@ def _sqrtmodp2(a, p, k):
   pk = p**k
   a %= pk
 
-  if a == 0: return range(0, pk, p**((k + 1) // 2))
+  if a == 0: return irange(0, pk - 1, step=p**((k + 1) // 2))
 
   m = 0
   while a % p == 0:
@@ -295,17 +335,34 @@ def _sqrtmodp2(a, p, k):
   rs = _sqrtmodp1(a, p, k - m)
   if not rs: return None
   m //= 2
-  return (x for r in rs for x in range(r * p**m, pk, p**(k - m)))
+  return (x for r in rs for x in irange(r * p**m, pk - 1, step=p**(k - m)))
 
 # combine the cases
 # returns an iterable of roots
 def sqrtmodp(a, p, k=1):
+  """
+  find square roots of <a> mod <p>^<k> where <p> is a prime number.
+
+  an iterator of roots is returned.
+  """
   return (_sqrtmodp1(a, p, k) if a % p != 0 else _sqrtmodp2(a, p, k))
 
 # find square roots of <a> mod <m> (i.e x such that pow(x, 2, m) = a (mod m)
 # fs is (optionally) the prime factorisation of n
 # returns an iterable of roots
 def sqrtmod(a, m, fs=None):
+  """
+   find square roots of <a> mod <m>.
+
+  i.e. values <x> such that (<x> * <x>) is congurent to <a> (mod <m>).
+
+  an iterator of roots is returned.
+
+  if you know the prime factorisation of <m> it can be passed as <fs>
+  (which should be a multiset).
+
+  if you know <m> is prime (or a power of a prime) you can use: sqrtmodp().
+  """
   if m == 1: return [0]
   # solve for each prime power in the factorisation
   if not fs: fs = multiset.from_pairs(prime_factor(m))
@@ -356,10 +413,10 @@ def cornacchia_primitive(D, N, fs=None):
 
 # find all solutions for X^2 + D.Y^2 = N
 def cornacchia(D, N):
-  # collect primitive solutions
-  ss = set(cornacchia_primitive(D, N))
   # find prime factors of N
   fs = multiset.from_pairs(prime_factor(N))
+  # collect primitive solutions
+  ss = set(cornacchia_primitive(D, N, fs))
   # determine non-primitive solutions
   sqs = multiset.from_pairs((p, e // 2) for (p, e) in fs.items())
   for vs in sqs.subsets(min_size=1):
@@ -368,6 +425,52 @@ def cornacchia(D, N):
     ss.update((g * X, g * Y) for (X, Y) in cornacchia_primitive(D, n, fs.difference(vs.multiply(2))))
   # return solutions in order
   return sorted(ss)
+
+###############################################################################
+
+# general LMM algorithm
+
+# general PQa algorithm
+def pells_PQa(P, Q, D, rD=None):
+  if rD is None: rD = sqrtf(D)
+  (A1, A2, B1, B2, G1, G2) = (1, 0, 0, 1, Q, -P)
+  while 1:
+    a = (P + rD) // Q
+    (A1, A2, B1, B2, G1, G2) = (a * A1 + A2, A1, a * B1 + B2, B1, a * G1 + G2, G1)
+    yield (P, Q, a, A1, B1, G1)
+    P = a * Q - P
+    Q = (D - P*P) // Q
+
+# general LLM (for N^2 > D)
+def pells_LMM(D, N, rD, u, v):
+  (s, t) = pells1n_fundamental(D)
+  for (f, _) in divisors_pairs(abs(N)):
+    (M, r) = divmod(N, f * f)
+    if r != 0: continue
+    m = abs(M)
+    for z in sqrtmod(D, m):
+      if 2 * z > m: z = z - m
+      # run the PQa algorithm until abs(Q) = 1, or (P, Q) repeats
+      (pB, pG, seen) = (0, m, set())
+      for (i, (P, Q, _, _, B, G)) in enumerate(pells_PQa(z, m, D, rD)):
+        if abs(Q) == 1:
+          if pG * pG - D * pB * pB == M:
+            (x, y) = (f * pG, f * pB)
+          else:
+            assert pG * pG - D * pB * pB == -M
+            (x, y) = (f * (pG * s + pB * D * t), f * (pB * s + pG * t))
+          # find minimum non-negative solution for this family
+          # (-x, -y) is in the same family as (x, y)
+          if (N > 0 and x < 0) or (N < 0 and y < 0): (x, y) = (-x, -y)
+          # advance until both x any y are non-negative
+          while x < 0 or y < 0:
+            (x, y) = (u * x + D * v * y, v * x + u * y)
+          yield (x, y)
+          break
+        # have we hit the repeating section?
+        if (P, Q) in seen: break
+        seen.add((P, Q))
+        (pB, pG) = (B, G)
 
 ######################################################################
 
@@ -398,13 +501,12 @@ def _diop_quad_bp(a, b, c):
   if Y0 - Y1 >= cornacchia_threshold:
     if a == 1 and b < c and gcd(b, c) == 1:
       if verbose: printf("[pells] switching to Cornacchia (instead of brute forcing {n} values)", n=Y0 - Y1)
-      for XY in cornacchia(b, c): yield XY
+      for s in cornacchia(b, c): yield s
       return
+    # otherwise fall back to brute force
 
-  # otherwise fall back to brute force
+  # brute force search
   if verbose or Y0 - Y1 >= cornacchia_threshold: printf("[pells] brute forcing {n} values", n=Y0 - Y1)
-
-  # continue with brute force search
   X = None
   for Y in irange(Y0, Y1, step=-1):
     r = c - b * Y * Y
@@ -456,11 +558,16 @@ def _diop_quad_a1(D, N):
 def _diop_empty():
   if 0: yield None
 
-# threshold at w
+# threshold at which candidate solutions are considered exhausted
 diop_quad_threshold = 10000
 
 # results (X, Y) for increasing X
 def diop_quad(a, b, c, maxC=None, validate=0):
+  """
+  find non-negative integer solution to the equation: a.X^2 + b.Y^2 = c.
+
+  an iterator of (X, Y) solutions are returned in increasing X order.
+  """
   if validate: (a, b, c) = map(as_int, (a, b, c))
   if a == 0 or b == 0: raise ValueError("diop_quad: invalid equation")
   if a < 0: (a, b, c) = (-a, -b, -c)
