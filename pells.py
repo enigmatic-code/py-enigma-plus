@@ -43,11 +43,11 @@ from __future__ import print_function
 
 from enigma import (
   enigma, irange, inf, is_square, sqrtf, sqrtc, gcd, div, divf, divc, multiply, invmod,
-  divisors_pairs, sq, rev, uniq, merge, multiset, cproduct, crt, as_int, cache, printf,
+  divisors_pairs, sq, rev, uniq, merge, multiset, cproduct, crt, identity, catch, as_int, cache, printf,
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-05-20"
+__version__ = "2026-05-26"
 
 pells = enigma.module(__name__)
 verbose = ('v' in enigma._PY_ENIGMA)
@@ -562,6 +562,7 @@ def _diop_empty():
 diop_quad_threshold = 10000
 
 # results (X, Y) for increasing X
+# [consider adding: fnX, fnY to validate (X, Y) solutions
 def diop_quad(a, b, c, maxC=None, validate=0):
   """
   find non-negative integer solution to the equation: a.X^2 + b.Y^2 = c.
@@ -592,6 +593,20 @@ def diop_quad(a, b, c, maxC=None, validate=0):
         printf("diop_quad: WARNING: terminating search (after {maxC} candidates)")
         return
   return fn()
+
+# filter the results of a call to diop_quad using function <f>
+# return the first <n> results (default = all)
+def diop_quadf(a, b, c, n=None, f=identity, maxC=None, validate=0):
+  j = 0
+  for (i, (X, Y)) in enumerate(diop_quad(a, b, c, maxC=maxC, validate=validate)):
+    r = catch(f, X, Y)
+    if r is None: continue
+    yield r
+    j += 1
+    if j == n: break
+    if i == maxC:
+      printf("diop_quadf: WARNING: terminating search (after {maxC} candidates)")
+      return
 
 ######################################################################
 
