@@ -66,7 +66,7 @@ def __plus_side():
 
   # solve the puzzle and output solutions
   def output(grid, rows, cols, sol, w=None):
-    if w is None: w = max(len(str(x)) for x in chain(flatten(grid), rows, cols))
+    if w is None: w = max(len(str(x)) for x in chain(flatten(grid), rows, cols) if x is not None)
     (sf, null) = (join([w, "d"]), '-' * w)
     # output solution
     fmt = lambda x: (fmts(sf, x) if x is not None else null)
