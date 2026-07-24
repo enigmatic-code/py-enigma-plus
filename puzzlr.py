@@ -15,7 +15,7 @@ from enigma import (
 
 ###############################################################################
 
-# solver for "Plus Side" puzzles (e.g. "Puzzlr 1", "Puzzlr 3")
+# solver for "Plus Side"/"Number Cross" puzzles (e.g. "Puzzlr 1", "Puzzlr 3")
 
 def __plus_side():
 
@@ -29,6 +29,7 @@ def __plus_side():
     # for each row/col construct possible subsets
     d = dict()
     for (ks, t) in chain(zip(g, rows), zip(unzip(g), cols)):
+      if t is None: continue
       ss = list()
       for js in subsets(ks):
         if sum(ns[j] for j in js) == t:
@@ -90,7 +91,7 @@ plus_side = make_namespace('plus_side', __plus_side())
 
 ###############################################################################
 
-# Solver for "Block Universe puzzles" (e.g. "Puzzlr 2", "Puzzlr 4")
+# Solver for "Block Universe"/"Shikaku" puzzles (e.g. "Puzzlr 2", "Puzzlr 4")
 
 def __block_universe():
 
@@ -148,3 +149,5 @@ def __block_universe():
   return locals()
 
 block_universe = make_namespace('block_universe', __block_universe())
+
+###############################################################################
