@@ -7,7 +7,7 @@ from __future__ import print_function
 
 from enigma import (
   defaultdict,
-  irange, flatten, chunk, subsets, unzip, chain, update,
+  irange, flatten, chunk, subsets, unzip, chain, update, ifirst,
   divisors_pairs, cproduct, singleton, exact_cover,
   join, fmts, printf,
   make_namespace
@@ -77,9 +77,11 @@ def __plus_side():
     printf()
     #print(ss)
 
-  def run(grid, rows, cols, w=None):
+  def run(grid, rows, cols, w=None, first=None):
     # solve the puzzle
-    for sol in solve(grid, rows, cols):
+    sols = solve(grid, rows, cols)
+    if first: sols = ifirst(sols, count=first)
+    for sol in sols:
       # output solution
       output(grid, rows, cols, sol, w)
 
