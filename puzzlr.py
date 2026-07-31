@@ -8,9 +8,9 @@ from __future__ import print_function
 from enigma import (
   defaultdict,
   irange, flatten, chunk, subsets, unzip, chain, update, ifirst,
-  divisors_pairs, cproduct, singleton, exact_cover,
+  divisors_pairs, cproduct, singleton, exact_cover, seq_all_same_r,
   join, fmts, printf,
-  make_namespace
+  make_namespace, call, basestring, fail, warn, args, _namecheck
 )
 
 ###############################################################################
@@ -85,6 +85,17 @@ def __plus_side():
       # output solution
       output(grid, rows, cols, sol, w)
 
+  # argv = ("<row sums>", "<col sums>", "<grid>")
+  def run_command_line(argv):
+    fail(len(argv) != 3, "invalid argv")
+    # translate any strings into lists of numbers (or None for "-")
+    fn = lambda x: (None if x == '-' else int(x))
+    argv = list((tuple(map(fn, arg.split())) if isinstance(arg, basestring) else arg) for arg in argv)
+    (rows, cols, grid) = argv
+    fail(len(rows) * len(cols) != len(grid), "invalid grid spec")
+    grid = list(chunk(grid, len(cols)))
+    run(grid, rows, cols)
+
   # return exported names
   return locals()
 
@@ -147,9 +158,36 @@ def __block_universe():
 
   run = solve
 
+  # argv = ("<row>", "<row>", ...)
+  def run_command_line(argv):
+    # translate any strings into lists of numbers
+    argv = list((tuple(map(int, arg.split())) if isinstance(arg, basestring) else arg) for arg in argv)
+    rows = argv
+    # check rows are all the same length
+    r = seq_all_same_r(map(len, rows))
+    fail(r.empty or not r.same, "invalid grid spec")
+    # warn if the size of the rectangles isn't the same as the area of the grid
+    ns = flatten(rows)
+    warn(sum(ns) != len(ns), "area mismatch")
+    run(rows)
+
   # return exported names
   return locals()
 
 block_universe = make_namespace('block_universe', __block_universe())
 
 ###############################################################################
+
+# allow puzzles to be solved from the command line
+if _namecheck(__name__):
+  argv = args([], 0)
+  if argv:
+    # extract the command
+    cmd = argv.pop(0)
+    ns = locals().get(cmd)
+    fail(ns is None, "unrecognised command")
+    fn = getattr(ns, 'run_command_line', None)
+    fail(fn is None, "invalid command")
+    # call the function
+    fn(argv)
+  #else: help()
