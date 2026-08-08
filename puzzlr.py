@@ -3,15 +3,18 @@
 
 from __future__ import print_function
 
-# 
+# solve "New Scientist" Puzzlr puzzles
 
 from enigma import (
   defaultdict,
   irange, flatten, chunk, subsets, unzip, chain, update, ifirst,
   divisors_pairs, cproduct, singleton, exact_cover, seq_all_same_r,
   join, fmts, printf,
-  make_namespace, call, basestring, fail, warn, args, _namecheck
+  make_namespace, call, basestring, base2int, fail, warn, args, _namecheck
 )
+
+__author__ = "Jim Randell <jim.randell@gmail.com>"
+__version__ = "2026-08-08"
 
 ###############################################################################
 
@@ -89,7 +92,7 @@ def __plus_side():
   def run_command_line(argv):
     fail(len(argv) != 3, "invalid argv")
     # translate any strings into lists of numbers (or None for "-")
-    fn = lambda x: (None if x == '-' else int(x))
+    fn = lambda x: (None if x == '-' else base2int(x))
     argv = list((tuple(map(fn, arg.split())) if isinstance(arg, basestring) else arg) for arg in argv)
     (rows, cols, grid) = argv
     fail(len(rows) * len(cols) != len(grid), "invalid grid spec")
@@ -161,7 +164,7 @@ def __block_universe():
   # argv = ("<row>", "<row>", ...)
   def run_command_line(argv):
     # translate any strings into lists of numbers
-    argv = list((tuple(map(int, arg.split())) if isinstance(arg, basestring) else arg) for arg in argv)
+    argv = list((tuple(map(base2int, arg.split())) if isinstance(arg, basestring) else arg) for arg in argv)
     rows = argv
     # check rows are all the same length
     r = seq_all_same_r(map(len, rows))
