@@ -13,3 +13,5 @@ Additional modules for solving puzzles that depend on **enigma.py**.
 **pells.py** = solve Diophantine quadratic equations in 2 variables.
 
 **cube.py** = the rotatations of a cube.
+
+**puzzlr.py** = solvers for New Scientist "Puzzlr" puzzles.
