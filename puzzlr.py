@@ -10,7 +10,7 @@ from enigma import (
   irange, flatten, chunk, subsets, unzip, chain, update, ifirst,
   divisors_pairs, cproduct, singleton, exact_cover, seq_all_same_r,
   join, fmts, printf,
-  make_namespace, call, basestring, base2int, fail, warn, args, _namecheck
+  make_namespace, basestring, base2int, fail, warn, args, lazy_import, _namecheck
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
@@ -165,9 +165,46 @@ def __block_universe():
       printf("[ {xs} ]", xs=join(ns, fn=fmt, sep=" "))
     printf()
 
-  def run(grid):
+  # plot a puzzle (using plot.py, if avaliable)
+  def plot(grid, sol=None):
+    Plot = lazy_import('plot.Plot')
+
+    (W, H) = (len(grid[0]), len(grid))
+
+    p = Plot(width=680, height=800, xscale=64.0, yscale=-64.0, xoffset=0.40625, yoffset=-11.5)
+
+    # plot the cells and numbers
+    for y in range(H):
+      for x in range(W):
+        n = grid[y][x]
+        p.line((x, y, x + 1, y, x + 1, y + 1, x, y + 1, x, y), width=0)
+        if n != 0:
+          p.label((x + 0.5, y + 0.5), str(n), font=("Helvetica", 22, "bold"))
+
+    # bounding box
+    p.line((0, 0, W, 0, W, H, 0, H, 0, 0), width=4)
+
+    if sol:
+      # plot solution
+      rect = dict()
+      for y in range(H):
+        for x in range(W):
+          n = sol[y][x]
+          if n not in rect:
+            # top-left
+            rect[n] = [(x, y), None]
+          else:
+            # other, last will be bottom-right
+            rect[n][1] = (x + 1, y + 1)
+      for (n, ((x0, y0), (x1, y1))) in rect.items():
+        p.line((x0, y0, x1, y0, x1, y1, x0, y1, x0, y0), width=4)
+
+    p.display()
+
+  def run(grid, **kw):
     for rows in solve(grid):
       output(rows)
+      if kw.get('plot', 0): plot(grid, rows)
 
   # argv = ("<row>", "<row>", ...)
   def run_command_line(argv):
