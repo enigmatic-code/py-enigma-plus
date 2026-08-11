@@ -14,7 +14,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-08-08"
+__version__ = "2026-08-11"
 
 ###############################################################################
 
@@ -152,14 +152,22 @@ def __block_universe():
         for p in ps:
           m[p] = i
 
-      # output the rectangles in a grid
-      fmt = fmts("02d")
+      # return solved rows
+      rows = list()
       for y in irange(H):
-        ns = list(m[i] for i in irange(y * W, (y + 1) * W - 1))
-        printf("[ {xs} ]", xs=join(ns, fn=fmt, sep=" "))
-      printf()
+        rows.append(list(m[i] for i in irange(y * W, (y + 1) * W - 1)))
+      yield rows
 
-  run = solve
+  def output(rows):
+    # output the rectangles in a grid
+    fmt = fmts("02d")
+    for ns in rows:
+      printf("[ {xs} ]", xs=join(ns, fn=fmt, sep=" "))
+    printf()
+
+  def run(grid):
+    for rows in solve(grid):
+      output(rows)
 
   # argv = ("<row>", "<row>", ...)
   def run_command_line(argv):
