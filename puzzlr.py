@@ -14,7 +14,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-08-11"
+__version__ = "2026-08-12"
 
 ###############################################################################
 
@@ -167,9 +167,9 @@ def __block_universe():
 
   # plot a puzzle (using plot.py, if avaliable)
   def plot(grid, sol=None):
-    Plot = lazy_import('plot.Plot')
-
     (W, H) = (len(grid[0]), len(grid))
+
+    Plot = lazy_import('plot.Plot')
 
     p = Plot(width=680, height=800, xscale=64.0, yscale=-64.0, xoffset=0.40625, yoffset=-11.5)
 
@@ -177,12 +177,12 @@ def __block_universe():
     for y in range(H):
       for x in range(W):
         n = grid[y][x]
-        p.line((x, y, x + 1, y, x + 1, y + 1, x, y + 1, x, y), width=0)
+        p.line((x, y, x + 1, y, x + 1, y + 1, x, y + 1, x, y), width=0, tag=3)
         if n != 0:
-          p.label((x + 0.5, y + 0.5), str(n), font=("Helvetica", 22, "bold"))
+          p.label((x + 0.5, y + 0.5), str(n), font=("Helvetica", 22, "bold"), tag=2)
 
     # bounding box
-    p.line((0, 0, W, 0, W, H, 0, H, 0, 0), width=4)
+    p.line((0, 0, W, 0, W, H, 0, H, 0, 0), width=4, tag=4)
 
     if sol:
       # plot solution
@@ -197,14 +197,14 @@ def __block_universe():
             # other, last will be bottom-right
             rect[n][1] = (x + 1, y + 1)
       for (n, ((x0, y0), (x1, y1))) in rect.items():
-        p.line((x0, y0, x1, y0, x1, y1, x0, y1, x0, y0), width=4)
+        p.line((x0, y0, x1, y0, x1, y1, x0, y1, x0, y0), width=4, tag=1)
 
     p.display()
 
   def run(grid, **kw):
-    for rows in solve(grid):
-      output(rows)
-      if kw.get('plot', 0): plot(grid, rows)
+    for sol in solve(grid):
+      output(sol)
+      if kw.get('plot', 0): plot(grid, sol)
 
   # argv = ("<row>", "<row>", ...)
   def run_command_line(argv):
