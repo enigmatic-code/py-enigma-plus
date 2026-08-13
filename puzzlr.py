@@ -9,12 +9,12 @@ from enigma import (
   defaultdict,
   irange, flatten, chunk, subsets, unzip, chain, update, ifirst,
   divisors_pairs, cproduct, singleton, exact_cover, seq_all_same_r,
-  join, fmts, printf,
-  make_namespace, basestring, base2int, fail, warn, args, lazy_import, _namecheck
+  wrap, fcompose, nl, join, fmts, printf,
+  make_namespace, filter2, basestring, base2int, fail, warn, args, lazy_import, _namecheck
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-08-12"
+__version__ = "2026-08-13"
 
 ###############################################################################
 
@@ -158,14 +158,14 @@ def __block_universe():
         rows.append(list(m[i] for i in irange(y * W, (y + 1) * W - 1)))
       yield rows
 
-  def output(rows):
-    # output the rectangles in a grid
+  # output the rectangles in a grid
+  def output(grid, sol):
     fmt = fmts("02d")
-    for ns in rows:
+    for ns in sol:
       printf("[ {xs} ]", xs=join(ns, fn=fmt, sep=" "))
     printf()
 
-  # plot a puzzle (using plot.py, if avaliable)
+  # plot a puzzle (using plot.py, if available)
   def plot(grid, sol=None):
     (W, H) = (len(grid[0]), len(grid))
 
@@ -201,13 +201,64 @@ def __block_universe():
 
     p.display()
 
+  # pretty print (using ASCII art) [contributed by Ruud van der Ham]
+  @wrap(fcompose(join, print))  # join all the bits of output together
+  def ascii(grid, rows):
+    # turn the solution into a dict (to allow out of range indexing)
+    (Y, X) = (len(grid), len(grid[0]))
+    sol = dict(((y, x), rows[y][x]) for y in irange(Y) for x in irange(X))
+    # generate bits of output
+    fmt = fmts('2d')
+    for y in irange(0, Y):
+      for x in irange(0, X):
+        v = (sol.get((y - 1, x - 1)) == sol.get((y, x - 1)) and sol.get((y - 1, x)) == sol.get((y, x)))
+        h = (sol.get((y - 1, x - 1)) == sol.get((y - 1, x)) and sol.get((y, x - 1)) == sol.get((y, x)))
+        yield ((' ' if h else '|') if v else ('-' if h else '+'))
+        yield ('  ' if sol.get((y - 1, x)) == sol.get((y, x)) else '--')
+      yield nl
+      if y != Y:
+        for x in irange(0, X):
+          yield (' ' if sol.get((y, x - 1)) == sol.get((y, x)) else '|')
+          if x != X:
+            n = grid[y][x]
+            yield (' .' if n == 0 else fmt(n))
+      yield nl
+
+  # set defaults
+  default = {
+    # default output function(s)
+    'output': [output],
+  }
+
+  def get_option(k, v=None):
+    ns = block_universe
+    # if no value if specified, return the default value
+    if v is None: return ns.default.get(k)
+    # perform specific processing for given keys
+    if k == 'output':
+      if isinstance(v, basestring):
+        return list(getattr(ns, fn) for fn in str.split(v, ","))
+    # return the value
+    return v
+
+  def set_default(**kw):
+    ns = block_universe
+    for (k, v) in kw.items():
+      ns.default[k] = get_option(k, v)
+
   def run(grid, **kw):
+    output = get_option('output', kw.get('output'))
     for sol in solve(grid):
-      output(sol)
-      if kw.get('plot', 0): plot(grid, sol)
+      for fn in output:
+        fn(grid, sol)
 
   # argv = ("<row>", "<row>", ...)
   def run_command_line(argv):
+    # process any options "--<arg>=<val>"
+    (optv, argv) = filter2((lambda x: x.startswith("--")), argv)
+    for opt in optv:
+      kw = dict([opt[2:].split('=')])
+      set_default(**kw)
     # translate any strings into lists of numbers
     argv = list((tuple(map(base2int, arg.split())) if isinstance(arg, basestring) else arg) for arg in argv)
     rows = argv
