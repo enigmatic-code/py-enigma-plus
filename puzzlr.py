@@ -14,7 +14,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-08-13"
+__version__ = "2026-08-14"
 
 ###############################################################################
 
@@ -165,6 +165,8 @@ def __block_universe():
       printf("[ {xs} ]", xs=join(ns, fn=fmt, sep=" "))
     printf()
 
+  output_rects = output
+
   # plot a puzzle (using plot.py, if available)
   def plot(grid, sol=None):
     (W, H) = (len(grid[0]), len(grid))
@@ -201,6 +203,8 @@ def __block_universe():
 
     p.display()
 
+  output_plot = plot
+
   # pretty print (using ASCII art) [contributed by Ruud van der Ham]
   @wrap(fcompose(join, print))  # join all the bits of output together
   def ascii(grid, rows):
@@ -224,10 +228,12 @@ def __block_universe():
             yield (' .' if n == 0 else fmt(n))
       yield nl
 
+  output_ascii = ascii
+
   # set defaults
   default = {
     # default output function(s)
-    'output': [output],
+    'output': [output_rects],
   }
 
   def get_option(k, v=None):
