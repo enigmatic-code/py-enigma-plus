@@ -14,7 +14,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-08-14"
+__version__ = "2026-08-15"
 
 ###############################################################################
 
@@ -78,15 +78,68 @@ def __plus_side():
       printf("[ {xs} ] = {t}", xs=join(xs, fn=fmt, sep=" "), t=fmt(t))
     printf("= {cols}", cols=join(cols, fn=fmt, sep=" "))
     printf()
-    #print(ss)
 
-  def run(grid, rows, cols, w=None, first=None):
+  output_ascii = output
+
+  # plot a puzzle (using plot.py, if available)
+  def plot(grid, rows, cols, sol=None, w=None):
+    (W, H) = (len(grid[0]), len(grid))
+
+    Plot = lazy_import('plot.Plot')
+
+    p = Plot(width=500, height=500, xscale=64.0, yscale=-64.0, xoffset=0.40625, yoffset=-6.7345)
+
+    # plot the cells and numbers
+    font = ("Helvetica", 22, "bold")
+    for y in range(H):
+      for x in range(W):
+        n = grid[y][x]
+        p.line((x, y, x + 1, y, x + 1, y + 1, x, y + 1, x, y), width=0, tag=3)
+        p.label((x + 0.5, y + 0.5), str(n), font=font, tag=2)
+        p.label((x + 0.5, H + 0.15), u"\u2193", anchor="n", font=font, tag=2) # DOWN ARROW
+        p.label((x + 0.5, H + 1.15), str(cols[x]), anchor="s", font=font, tag=2)
+      p.label((W + 0.15, y + 0.5), u"\u2192", anchor="w", font=font, tag=2) # LEFT ARROW
+      p.label((W + 1.2, y + 0.5), str(rows[y]), anchor="e", font=font, tag=2)
+
+    # bounding box
+    p.line((0, 0, W, 0, W, H, 0, H, 0, 0), width=4, tag=4)
+
+    if sol:
+      for y in range(H):
+        for x in range(W):
+          if sol[y][x]:
+            p.circle((x + 0.5, y + 0.5), 0.4, fill=None, outline="red", width=4, tag=1)
+
+    p.display()
+
+  output_plot = plot
+
+  # set defaults
+  defaults = {
+    # default output function(s)
+    'output': [output],
+  }
+
+  def get_option(k, v=None):
+    ns = plus_side
+    # if no value if specified, return the default value
+    if v is None: return ns.defaults.get(k)
+    # perform specific processing for given keys
+    if k == 'output':
+      if isinstance(v, basestring):
+        return list(getattr(ns, str.strip(fn)) for fn in str.split(v, ","))
+    # return the value
+    return v
+
+  def run(grid, rows, cols, w=None, first=None, output=None):
+    output_fns = get_option('output', output)
     # solve the puzzle
     sols = solve(grid, rows, cols)
     if first: sols = ifirst(sols, count=first)
     for sol in sols:
       # output solution
-      output(grid, rows, cols, sol, w)
+      for fn in output_fns:
+        fn(grid, rows, cols, sol, w)
 
   # argv = ("<row sums>", "<col sums>", "<grid>")
   def run_command_line(argv):
@@ -231,7 +284,7 @@ def __block_universe():
   output_ascii = ascii
 
   # set defaults
-  default = {
+  defaults = {
     # default output function(s)
     'output': [output_rects],
   }
@@ -239,11 +292,11 @@ def __block_universe():
   def get_option(k, v=None):
     ns = block_universe
     # if no value if specified, return the default value
-    if v is None: return ns.default.get(k)
+    if v is None: return ns.defaults.get(k)
     # perform specific processing for given keys
     if k == 'output':
       if isinstance(v, basestring):
-        return list(getattr(ns, fn) for fn in str.split(v, ","))
+        return list(getattr(ns, str.strip(fn)) for fn in str.split(v, ","))
     # return the value
     return v
 
@@ -252,10 +305,12 @@ def __block_universe():
     for (k, v) in kw.items():
       ns.default[k] = get_option(k, v)
 
-  def run(grid, **kw):
-    output = get_option('output', kw.get('output'))
+  def run(grid, output=None):
+    output_fns = get_option('output', output)
+    # solve the puzzle
     for sol in solve(grid):
-      for fn in output:
+      # output solution
+      for fn in output_fns:
         fn(grid, sol)
 
   # argv = ("<row>", "<row>", ...)
