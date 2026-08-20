@@ -14,7 +14,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-08-15"
+__version__ = "2026-08-19"
 
 ###############################################################################
 
@@ -67,7 +67,7 @@ def __plus_side():
           #yield from _solve(d_, ss_)  #[Python 3]
           for z in _solve(d_, ss_): yield z  #[Python 2]
 
-  # solve the puzzle and output solutions
+  # output solution
   def output(grid, rows, cols, sol, w=None):
     if w is None: w = max(len(str(x)) for x in chain(flatten(grid), rows, cols) if x is not None)
     (sf, null) = (join([w, "d"]), '-' * w)
@@ -90,7 +90,7 @@ def __plus_side():
     p = Plot(width=500, height=500, xscale=64.0, yscale=-64.0, xoffset=0.40625, yoffset=-6.7345)
 
     # plot the cells and numbers
-    font = ("Helvetica", 22, "bold")
+    font = get_option('plot.font')
     for y in range(H):
       for x in range(W):
         n = grid[y][x]
@@ -118,6 +118,8 @@ def __plus_side():
   defaults = {
     # default output function(s)
     'output': [output],
+    # plot defaults
+    'plot.font': ("Helvetica", 22, "bold"),
   }
 
   def get_option(k, v=None):
@@ -229,12 +231,13 @@ def __block_universe():
     p = Plot(width=680, height=800, xscale=64.0, yscale=-64.0, xoffset=0.40625, yoffset=-11.5)
 
     # plot the cells and numbers
+    font = get_option('plot.font')
     for y in range(H):
       for x in range(W):
         n = grid[y][x]
         p.line((x, y, x + 1, y, x + 1, y + 1, x, y + 1, x, y), width=0, tag=3)
         if n != 0:
-          p.label((x + 0.5, y + 0.5), str(n), font=("Helvetica", 22, "bold"), tag=2)
+          p.label((x + 0.5, y + 0.5), str(n), font=font, tag=2)
 
     # bounding box
     p.line((0, 0, W, 0, W, H, 0, H, 0, 0), width=4, tag=4)
@@ -287,6 +290,8 @@ def __block_universe():
   defaults = {
     # default output function(s)
     'output': [output_rects],
+    # plot defaults
+    'plot.font': ("Helvetica", 22, "bold"),
   }
 
   def get_option(k, v=None):
