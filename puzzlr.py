@@ -14,7 +14,79 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-08-19"
+__version__ = "2026-08-21"
+
+###############################################################################
+
+# provide defaults in the module
+
+def resolve(name, frame):
+  if name in frame.f_locals: return frame.f_locals.get(name)
+  if name in frame.f_globals: return frame.f_globals.get(name)
+  # (we could track back through previous frames)
+  return None
+
+class Defaults(object):
+
+  def __init__(self, defs, fns):
+    self.defs = defs
+    self.fns = fns
+    # also store a scope for resolving function names
+    getframe = lazy_import("sys._getframe")
+    self.frame = getframe(2)
+    # has data been loaded?
+    self.loaded = 0
+
+  # load defaults from environment, command line
+  def load(self):
+    if self.loaded: return
+    # (we could potentially load defaults from a preferences file here)
+    # load any defaults defined in $PUZZLR_DEFAULTS
+    self.load_env("PUZZLR_DEFAULTS")
+    self.load_argv()
+    self.loaded = 1
+
+  # load defaults from an environment variable
+  def load_env(self, var):
+    os = lazy_import('os')
+    s = os.getenv(var)
+    if not s: return
+    kw = dict(map(str.strip, str.split(x, '=')) for x in str.split(s, ';'))
+    self.set(kw)
+
+  # load defaults from sys.argv (which is modified)
+  def load_argv(self):
+    sys = lazy_import('sys')
+    argv = sys.argv
+    xs = list()
+    for (i, x) in enumerate(argv):
+      if x.startswith("--"):
+        self.set(dict([x[2:].split('=')]))
+        xs.insert(0, i)
+    for i in xs: del argv[i]
+
+  def set(self, defs, fns=None):
+    self.defs.update(defs)
+    if fns: self.fns.update(fns)
+
+  def get(self, k, v=None):
+    if not self.loaded: self.load()
+    # if no value is specified fetch the stored value
+    if v is None: v = self.defs.get(k)
+    # do we need to parse a string?
+    if isinstance(v, basestring):
+      # is there a parse function?
+      fn = self.fns.get(k)
+      if isinstance(fn, basestring):
+        fn = resolve(fn, self.frame)
+      if callable(fn):
+        v = fn(v, self.frame)
+    #printf("defaults.get {k!r} -> {v!r}")
+    return v
+
+# parse strings to appropriate values
+def list_of_str(v, frame=None): return str.split(v, ',')
+def list_of_fn(v, frame=None): return list(resolve(str.strip(fn), frame) for fn in str.split(v, ','))
 
 ###############################################################################
 
@@ -90,7 +162,7 @@ def __plus_side():
     p = Plot(width=500, height=500, xscale=64.0, yscale=-64.0, xoffset=0.40625, yoffset=-6.7345)
 
     # plot the cells and numbers
-    font = get_option('plot.font')
+    font = defaults.get('plot.font')
     for y in range(H):
       for x in range(W):
         n = grid[y][x]
@@ -115,26 +187,13 @@ def __plus_side():
   output_plot = plot
 
   # set defaults
-  defaults = {
-    # default output function(s)
-    'output': [output],
-    # plot defaults
-    'plot.font': ("Helvetica", 22, "bold"),
-  }
-
-  def get_option(k, v=None):
-    ns = plus_side
-    # if no value if specified, return the default value
-    if v is None: return ns.defaults.get(k)
-    # perform specific processing for given keys
-    if k == 'output':
-      if isinstance(v, basestring):
-        return list(getattr(ns, str.strip(fn)) for fn in str.split(v, ","))
-    # return the value
-    return v
+  defaults = Defaults(
+    { 'output': [output], 'plot.font': ("Helvetica", "22", "bold") },
+    { 'output': list_of_fn, 'plot.font': list_of_str },
+  )
 
   def run(grid, rows, cols, w=None, first=None, output=None):
-    output_fns = get_option('output', output)
+    output_fns = defaults.get('output', output)
     # solve the puzzle
     sols = solve(grid, rows, cols)
     if first: sols = ifirst(sols, count=first)
@@ -231,7 +290,7 @@ def __block_universe():
     p = Plot(width=680, height=800, xscale=64.0, yscale=-64.0, xoffset=0.40625, yoffset=-11.5)
 
     # plot the cells and numbers
-    font = get_option('plot.font')
+    font = defaults.get('plot.font')
     for y in range(H):
       for x in range(W):
         n = grid[y][x]
@@ -286,32 +345,13 @@ def __block_universe():
 
   output_ascii = ascii
 
-  # set defaults
-  defaults = {
-    # default output function(s)
-    'output': [output_rects],
-    # plot defaults
-    'plot.font': ("Helvetica", 22, "bold"),
-  }
-
-  def get_option(k, v=None):
-    ns = block_universe
-    # if no value if specified, return the default value
-    if v is None: return ns.defaults.get(k)
-    # perform specific processing for given keys
-    if k == 'output':
-      if isinstance(v, basestring):
-        return list(getattr(ns, str.strip(fn)) for fn in str.split(v, ","))
-    # return the value
-    return v
-
-  def set_default(**kw):
-    ns = block_universe
-    for (k, v) in kw.items():
-      ns.default[k] = get_option(k, v)
+  defaults = Defaults(
+    { 'output': [output_rects], 'plot.font': ("Helvetica", "22", "bold") },
+    { 'output': list_of_fn, 'plot.font': list_of_str },
+  )
 
   def run(grid, output=None):
-    output_fns = get_option('output', output)
+    output_fns = defaults.get('output', output)
     # solve the puzzle
     for sol in solve(grid):
       # output solution
@@ -324,7 +364,7 @@ def __block_universe():
     (optv, argv) = filter2((lambda x: x.startswith("--")), argv)
     for opt in optv:
       kw = dict([opt[2:].split('=')])
-      set_default(**kw)
+      defaults.set(kw)
     # translate any strings into lists of numbers
     argv = list((tuple(map(base2int, arg.split())) if isinstance(arg, basestring) else arg) for arg in argv)
     rows = argv
