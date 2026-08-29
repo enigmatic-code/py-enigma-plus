@@ -14,7 +14,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-08-21"
+__version__ = "2026-08-29"
 
 ###############################################################################
 
@@ -24,7 +24,7 @@ def resolve(name, frame):
   if name in frame.f_locals: return frame.f_locals.get(name)
   if name in frame.f_globals: return frame.f_globals.get(name)
   # (we could track back through previous frames)
-  return None
+  raise ValueError("can\'t resolve name " + repr(name))
 
 class Defaults(object):
 
@@ -151,10 +151,10 @@ def __plus_side():
     printf("= {cols}", cols=join(cols, fn=fmt, sep=" "))
     printf()
 
-  output_ascii = output
+  ascii = output_ascii = output
 
   # plot a puzzle (using plot.py, if available)
-  def plot(grid, rows, cols, sol=None, w=None):
+  def output_plot(grid, rows, cols, sol=None, w=None):
     (W, H) = (len(grid[0]), len(grid))
 
     Plot = lazy_import('plot.Plot')
@@ -184,7 +184,7 @@ def __plus_side():
 
     p.display()
 
-  output_plot = plot
+  plot = output_plot
 
   # set defaults
   defaults = Defaults(
@@ -282,7 +282,7 @@ def __block_universe():
   output_rects = output
 
   # plot a puzzle (using plot.py, if available)
-  def plot(grid, sol=None):
+  def output_plot(grid, sol=None):
     (W, H) = (len(grid[0]), len(grid))
 
     Plot = lazy_import('plot.Plot')
@@ -318,11 +318,11 @@ def __block_universe():
 
     p.display()
 
-  output_plot = plot
+  plot = output_plot
 
   # pretty print (using ASCII art) [contributed by Ruud van der Ham]
   @wrap(fcompose(join, print))  # join all the bits of output together
-  def ascii(grid, rows):
+  def output_ascii(grid, rows):
     # turn the solution into a dict (to allow out of range indexing)
     (Y, X) = (len(grid), len(grid[0]))
     sol = dict(((y, x), rows[y][x]) for y in irange(Y) for x in irange(X))
@@ -343,7 +343,7 @@ def __block_universe():
             yield (' .' if n == 0 else fmt(n))
       yield nl
 
-  output_ascii = ascii
+  ascii = output_ascii
 
   defaults = Defaults(
     { 'output': [output_rects], 'plot.font': ("Helvetica", "22", "bold") },
