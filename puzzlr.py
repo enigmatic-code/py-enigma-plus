@@ -14,7 +14,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-08-29"
+__version__ = "2026-09-05"
 
 ###############################################################################
 
@@ -163,8 +163,8 @@ def __plus_side():
 
     # plot the cells and numbers
     font = defaults.get('plot.font')
-    for y in range(H):
-      for x in range(W):
+    for y in irange(H):
+      for x in irange(W):
         n = grid[y][x]
         p.line((x, y, x + 1, y, x + 1, y + 1, x, y + 1, x, y), width=0, tag=3)
         p.label((x + 0.5, y + 0.5), str(n), font=font, tag=2)
@@ -177,8 +177,8 @@ def __plus_side():
     p.line((0, 0, W, 0, W, H, 0, H, 0, 0), width=4, tag=4)
 
     if sol:
-      for y in range(H):
-        for x in range(W):
+      for y in irange(H):
+        for x in irange(W):
           if sol[y][x]:
             p.circle((x + 0.5, y + 0.5), 0.4, fill=None, outline="red", width=4, tag=1)
 
@@ -291,12 +291,14 @@ def __block_universe():
 
     # plot the cells and numbers
     font = defaults.get('plot.font')
-    for y in range(H):
-      for x in range(W):
-        n = grid[y][x]
-        p.line((x, y, x + 1, y, x + 1, y + 1, x, y + 1, x, y), width=0, tag=3)
-        if n != 0:
-          p.label((x + 0.5, y + 0.5), str(n), font=font, tag=2)
+    for y in irange(0, H):
+      p.line((0, y, W, y), width=0, dash=(2, 4), tag=3)
+    for x in irange(0, W):
+      p.line((x, 0, x, H), width=0, dash=(2, 4), tag=3)
+    for (y, x) in cproduct([irange(H), irange(W)]):
+      n = grid[y][x]
+      if n != 0:
+        p.label((x + 0.5, y + 0.5), str(n), font=font, tag=2)
 
     # bounding box
     p.line((0, 0, W, 0, W, H, 0, H, 0, 0), width=4, tag=4)
