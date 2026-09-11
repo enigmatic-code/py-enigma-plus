@@ -9,12 +9,12 @@ from enigma import (
   defaultdict,
   irange, flatten, chunk, subsets, unzip, chain, update, ifirst,
   divisors_pairs, cproduct, singleton, exact_cover, seq_all_same_r,
-  wrap, fcompose, nl, join, fmts, printf,
+  nl, join, fmts, printf,
   make_namespace, filter2, basestring, base2int, fail, warn, args, lazy_import, _namecheck
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-09-05"
+__version__ = "2026-09-11"
 
 ###############################################################################
 
@@ -279,7 +279,7 @@ def __block_universe():
       printf("[ {xs} ]", xs=join(ns, fn=fmt, sep=" "))
     printf()
 
-  output_rects = output
+  rects = output_rects = output
 
   # plot a puzzle (using plot.py, if available)
   def output_plot(grid, sol=None):
@@ -323,8 +323,7 @@ def __block_universe():
   plot = output_plot
 
   # pretty print (using ASCII art) [contributed by Ruud van der Ham]
-  @wrap(fcompose(join, print))  # join all the bits of output together
-  def output_ascii(grid, rows):
+  def generate_ascii(grid, rows):
     # turn the solution into a dict (to allow out of range indexing)
     (Y, X) = (len(grid), len(grid[0]))
     sol = dict(((y, x), rows[y][x]) for y in irange(Y) for x in irange(X))
@@ -345,7 +344,7 @@ def __block_universe():
             yield (' .' if n == 0 else fmt(n))
       yield nl
 
-  ascii = output_ascii
+  ascii = output_ascii = lambda grid, rows: print(join(generate_ascii(grid, rows)))
 
   defaults = Defaults(
     { 'output': [output_rects], 'plot.font': ("Helvetica", "22", "bold") },
