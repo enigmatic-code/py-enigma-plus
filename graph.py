@@ -6,11 +6,13 @@
 from __future__ import print_function
 
 from enigma import (
-  enigma, namedtuple, defaultdict, static, group, cproduct, subsets, is_disjoint, update, fail
+  enigma, namedtuple, defaultdict, static, group, cproduct, subsets,
+  is_disjoint, update, empty, peek, fail,
+  irange,
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2025-10-30"
+__version__ = "2026-09-25"
 
 graph = enigma.module(__name__)
 
@@ -34,6 +36,38 @@ def adj2edges(adj):
     for y in adj[x]:
       if not (x > y):
         yield (x, y)
+
+# rectangle grid -> edges
+def grid2edges(g, W=None, H=None):
+  if W is None: W = len(g[0])
+  if H is None: H = len(g)
+  es = set()
+  for y in irange(H):
+    for x in irange(W):
+      r = g[y][x]
+      if x < W - 1:
+        h = g[y][x + 1]
+        if h != r: es.add((r, h))
+      if y < H - 1:
+        v = g[y + 1][x]
+        if v != r: es.add((r, v))
+  return es
+
+# rectangle grid -> adjacency matrix
+def grid2adj(g, W=None, H=None):
+  return edges2adj(grid2edges(g, W=W, H=H))
+
+######################################################################
+
+# transitive closure
+
+# compute transitive closure of vertices <vs>
+def closure(adj, vs, ss=empty):
+  while vs:
+    v = peek(vs)
+    ss = ss.union({v})
+    vs = vs.union(adj.get(v, empty)).difference(ss)
+  return ss
 
 ######################################################################
 
@@ -76,6 +110,29 @@ def find_isomorphism(adj, adjs):
 # check two graphs (adjacency matrix) are isomorphic
 # return a map of nodes in adj1 to nodes in adj2, or None
 def is_isomorphic(adj1, adj2): return find_isomorphism(adj1, [adj2]).map
+
+######################################################################
+
+# vertex colouring:
+
+def _colourings(k, adj, unc, d=dict()):
+  if not unc:
+    yield d
+  else:
+    # choose the vertex with the largest number of uncoloured neighbours
+    fn = lambda k: sum(1 for x in adj[k] if x not in d)
+    v = max(unc, key=fn)
+    # choose colour for k (different from adjacent vertices)
+    cs = set(irange(1, k)).difference(set(d.get(x) for x in adj[v]))
+    for c in cs:
+      for z in _colourings(k, adj, unc.difference({v}), update(d, [(v, c)])): yield z
+
+# attempt to find a k-colouring of the graph (using labels 1..k)
+def colourings(k, adj):
+  return _colourings(k, adj, set(adj.keys()))
+
+def colouring(k, adj):
+  return peek(colourings(k, adj))
 
 ######################################################################
 
