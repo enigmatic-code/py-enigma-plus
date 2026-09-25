@@ -289,6 +289,34 @@ def __block_universe():
 
     p = Plot(width=680, height=800, xscale=64.0, yscale=-64.0, xoffset=0.40625, yoffset=-11.5)
 
+    rect = dict()
+    if sol:
+      # plot solution
+      for y in range(H):
+        for x in range(W):
+          n = sol[y][x]
+          if n not in rect:
+            # top-left
+            rect[n] = [(x, y), None]
+          else:
+            # other, last will be bottom-right
+            rect[n][1] = (x + 1, y + 1)
+
+    if rect:
+      try:
+        graph = lazy_import('graph')
+        # construct the adjacency graph
+        adj = graph.grid2adj(sol, W, H)
+        # label the rectangles with a 4-colouring
+        d = graph.colouring(4, adj)
+        # map colouring to actual colours
+        cols = { 1: "#ed6964", 2: "#aadd6c", 3: "#74afda", 4: "#fadf75" } # red/green/blue/yellow
+        # plot the colours
+        for (n, ((x0, y0), (x1, y1))) in rect.items():
+          p.polygon((x0, y0, x1, y0, x1, y1, x0, y1, x0, y0), width=0, fill=cols[d[sol[y0][x0]]], tag=1)
+      except ModuleNotFoundError:
+        pass
+
     # plot the cells and numbers
     font = defaults.get('plot.font')
     for y in irange(0, H):
@@ -303,18 +331,8 @@ def __block_universe():
     # bounding box
     p.line((0, 0, W, 0, W, H, 0, H, 0, 0), width=4, tag=4)
 
-    if sol:
-      # plot solution
-      rect = dict()
-      for y in range(H):
-        for x in range(W):
-          n = sol[y][x]
-          if n not in rect:
-            # top-left
-            rect[n] = [(x, y), None]
-          else:
-            # other, last will be bottom-right
-            rect[n][1] = (x + 1, y + 1)
+    # plot solution
+    if rect:
       for (n, ((x0, y0), (x1, y1))) in rect.items():
         p.line((x0, y0, x1, y0, x1, y1, x0, y1, x0, y0), width=4, tag=1)
 
