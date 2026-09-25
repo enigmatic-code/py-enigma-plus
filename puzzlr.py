@@ -14,7 +14,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-09-11"
+__version__ = "2026-09-26"
 
 ###############################################################################
 
@@ -309,11 +309,12 @@ def __block_universe():
         adj = graph.grid2adj(sol, W, H)
         # label the rectangles with a 4-colouring
         d = graph.colouring(4, adj)
-        # map colouring to actual colours
-        cols = { 1: "#ed6964", 2: "#aadd6c", 3: "#74afda", 4: "#fadf75" } # red/green/blue/yellow
-        # plot the colours
-        for (n, ((x0, y0), (x1, y1))) in rect.items():
-          p.polygon((x0, y0, x1, y0, x1, y1, x0, y1, x0, y0), width=0, fill=cols[d[sol[y0][x0]]], tag=1)
+        if d:
+          # map colouring to actual colours
+          cols = { 1: "#ed6964", 2: "#aadd6c", 3: "#74afda", 4: "#fadf75" } # red/green/blue/yellow
+          # plot the colours
+          for (n, ((x0, y0), (x1, y1))) in rect.items():
+            p.polygon((x0, y0, x1, y0, x1, y1, x0, y1, x0, y0), width=0, fill=cols[d[sol[y0][x0]]], tag=1)
       except ModuleNotFoundError:
         pass
 
