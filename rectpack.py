@@ -13,11 +13,12 @@
 from __future__ import print_function
 
 from enigma import (
-  module, irange, multiset, ordered, unpack, uniq, join, printf
+  module, irange, multiset, ordered, unpack, uniq, ndigits, join, printf,
+  lazy_import, defaultdict,
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2025-07-01"
+__version__ = "2026-03-07"
 
 rectpack = module(__name__)
 
@@ -217,8 +218,46 @@ def output_grid(n, m, ps=None, g=None, start=None, end=None):
   if g is None: g = make_grid(n, m, ps)
   # output the packing
   k = max(max(r) for r in g)
-  z = len(str(k))
+  z = ndigits(k)
   if start is not None: printf("{start}")
   for r in g:
     printf("[ {r} ]", r=join((str(x or 0).zfill(z) for x in r), sep=' '))
   if end is not None: printf("{end}")
+
+# plot a grid using the plot.py library (if available)
+def plot_grid(n, m, ps=None, g=None, colour=None, **kw):
+
+  # if colour is "auto", then determine a suitable 4-colouring algorithmically
+  if colour == "auto":
+    if g is None: g = make_grid(n, m, ps)
+    try:
+      graph = lazy_import("graph")
+      # construct the adjacency matrix
+      adj = graph.grid2adj(g)
+      # label the vertices with a 4-colouring
+      d = graph.colouring(4, adj)
+      # map colouring to actual colours
+      cols = { 1: "#ed6964", 2: "#aadd6c", 3: "#74afda", 4: "#fadf75" } # red/green/blue/yellow
+      colour = dict((k, cols[v]) for (k, v) in d.items())
+    except ModuleNotFoundError:
+      colour = None
+
+  Plot = lazy_import("plot.Plot")
+  p = Plot(width=600, height=600, xscale=16.0, yscale=16.0, xoffset=0.9375, yoffset=1.125)
+
+  # plot the rectangles (TODO: 4-colouring)
+  for (i, (x, y, w, h)) in enumerate(ps, start=1):
+    #p.line((x, y, x + w, y, x + w, y + h, x, y + h, x, y), width=4)
+    fill = (colour.get(i, None) if colour else None)
+    p.polygon((x, y, x + w, y, x + w, y + h, x, y + h), outline="black", width=3, fill=fill)
+
+  # plot the cells
+  for y in irange(0, m):
+    p.line((0, y, n, y), width=0, dash=(2, 4))
+  for x in irange(0, n):
+    p.line((x, 0, x, m), width=0, dash=(2, 4))
+
+  # bounding box
+  p.line((0, 0, n, 0, n, m, 0, m, 0, 0), width=3)
+
+  p.display()
