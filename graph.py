@@ -12,7 +12,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-09-25"
+__version__ = "2026-09-26"
 
 graph = enigma.module(__name__)
 
@@ -115,21 +115,31 @@ def is_isomorphic(adj1, adj2): return find_isomorphism(adj1, [adj2]).map
 
 # vertex colouring:
 
-def _colourings(k, adj, unc, d=dict()):
+# perform in-place changes on unc, used, d
+def _colourings(k, adj, unc, deg, used, d):
   if not unc:
-    yield d
+    yield dict(d)
   else:
-    # choose the vertex with the largest number of uncoloured neighbours
-    fn = lambda k: sum(1 for x in adj[k] if x not in d)
-    v = max(unc, key=fn)
+    # choose the next vertex (DSatur measure)
+    v = max(unc, key=lambda v: (len(used[v]), deg[v]))
     # choose colour for k (different from adjacent vertices)
-    cs = set(irange(1, k)).difference(set(d.get(x) for x in adj[v]))
+    cs = set(irange(1, k)).difference(used[v])
+    unc.discard(v)
     for c in cs:
-      for z in _colourings(k, adj, unc.difference({v}), update(d, [(v, c)])): yield z
+      chs = list(x for x in adj[v] if x in unc and c not in used[x])
+      d[v] = c
+      for x in chs: used[x].add(c)
+      for z in _colourings(k, adj, unc, deg, used, d): yield z
+      # undo changes
+      del d[v]
+      for x in chs: used[x].discard(c)
+    unc.add(v)
 
 # attempt to find a k-colouring of the graph (using labels 1..k)
 def colourings(k, adj):
-  return _colourings(k, adj, set(adj.keys()))
+  deg = dict((v, len(adj[v])) for (v, vs) in adj.items())
+  used = dict((v, set()) for v in adj.keys())
+  return _colourings(k, adj, set(adj.keys()), deg, used, dict())
 
 def colouring(k, adj):
   return peek(colourings(k, adj))
