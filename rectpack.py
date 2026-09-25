@@ -18,7 +18,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-03-07"
+__version__ = "2026-09-26"
 
 rectpack = module(__name__)
 
@@ -230,17 +230,19 @@ def plot_grid(n, m, ps=None, g=None, colour=None, **kw):
   # if colour is "auto", then determine a suitable 4-colouring algorithmically
   if colour == "auto":
     if g is None: g = make_grid(n, m, ps)
+    colour = None
     try:
       graph = lazy_import("graph")
       # construct the adjacency matrix
       adj = graph.grid2adj(g)
       # label the vertices with a 4-colouring
       d = graph.colouring(4, adj)
-      # map colouring to actual colours
-      cols = { 1: "#ed6964", 2: "#aadd6c", 3: "#74afda", 4: "#fadf75" } # red/green/blue/yellow
-      colour = dict((k, cols[v]) for (k, v) in d.items())
+      if d:
+        # map colouring to actual colours
+        cols = { 1: "#ed6964", 2: "#aadd6c", 3: "#74afda", 4: "#fadf75" } # red/green/blue/yellow
+        colour = dict((k, cols[v]) for (k, v) in d.items())
     except ModuleNotFoundError:
-      colour = None
+      pass
 
   Plot = lazy_import("plot.Plot")
   p = Plot(width=600, height=600, xscale=16.0, yscale=16.0, xoffset=0.9375, yoffset=1.125)
