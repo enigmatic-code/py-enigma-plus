@@ -13,12 +13,12 @@
 from __future__ import print_function
 
 from enigma import (
-  module, irange, multiset, ordered, unpack, uniq, ndigits, join, printf,
-  lazy_import, defaultdict,
+  module, irange, multiset, unpack, uniq, ndigits, join, printf,
+  lazy_import
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-09-26"
+__version__ = "2026-09-27"
 
 rectpack = module(__name__)
 
@@ -187,16 +187,14 @@ def canonical(n, m, s):
   s1 = reflect_v(n, m, s0)
   s2 = reflect_h(n, m, s0)
   s3 = reflect_h(n, m, s1)
-  if n != m:
-    # a non-square rectangle has a symmetry group of order 4
-    return min(s0, s1, s2, s3)
-  else:
-    # a square has a symmetry group of order 8
-    r0 = rotate(n, m, s0)
-    r1 = rotate(n, m, s1)
-    r2 = rotate(n, m, s2)
-    r3 = rotate(n, m, s3)
-    return min(s0, s1, s2, s3, r0, r1, r2, r3)
+  # a non-square rectangle has a symmetry group of order 4
+  if n != m: return min(s0, s1, s2, s3)
+  # a square has a symmetry group of order 8
+  r0 = rotate(n, m, s0)
+  r1 = rotate(n, m, s1)
+  r2 = rotate(n, m, s2)
+  r3 = rotate(n, m, s3)
+  return min(s0, s1, s2, s3, r0, r1, r2, r3)
 
 # generate symmetrically different packings
 # this keeps track of all packings found, so may use a lot of memory
