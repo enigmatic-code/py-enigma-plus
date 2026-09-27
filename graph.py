@@ -12,7 +12,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-09-26"
+__version__ = "2026-09-27"
 
 graph = enigma.module(__name__)
 
@@ -129,7 +129,8 @@ def _colourings(k, adj, unc, deg, used, d):
       chs = list(x for x in adj[v] if x in unc and c not in used[x])
       d[v] = c
       for x in chs: used[x].add(c)
-      for z in _colourings(k, adj, unc, deg, used, d): yield z
+      #yield from _colourings(k, adj, unc, deg, used, d)  #[Python 3]
+      for z in _colourings(k, adj, unc, deg, used, d): yield z  #[Python 2]
       # undo changes
       del d[v]
       for x in chs: used[x].discard(c)
@@ -142,7 +143,7 @@ def colourings(k, adj):
   return _colourings(k, adj, set(adj.keys()), deg, used, dict())
 
 def colouring(k, adj):
-  return peek(colourings(k, adj))
+  return peek(colourings(k, adj), default=None)
 
 ######################################################################
 
