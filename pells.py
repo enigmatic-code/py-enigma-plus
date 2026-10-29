@@ -26,7 +26,7 @@ the behaviour of the algorithm can be modified with the following variables:
 
   cornacchia_threshold = threshold at which it switches to Cornacchia's
     algorithm when a > 0, b > 0, c > 0. Below this value a brute force
-    algorithm is used. (default = 500000)
+    algorithm is used. (default = 50000)
 
   diop_quad_threshold = threshold at which candidate solutions are
     considered exhausted. (default = 10000)
@@ -42,12 +42,12 @@ Auxiliary routines which may be useful are:
 from __future__ import print_function
 
 from enigma import (
-  enigma, irange, inf, is_square, sqrtf, sqrtc, gcd, div, divf, divc, multiply, invmod,
+  enigma, Delay, irange, inf, is_square, sqrtf, sqrtc, gcd, div, divf, divc, multiply, invmod,
   divisors_pairs, sq, rev, uniq, merge, multiset, cproduct, crt, identity, catch, as_int, cache, printf,
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-05-26"
+__version__ = "2026-10-29"
 
 pells = enigma.module(__name__)
 verbose = ('v' in enigma._PY_ENIGMA)
@@ -201,6 +201,9 @@ def pells_LMMs(D, N, rD=None):
     (m, r) = divmod(N, f * f)
     if r == 0:
       fs[m] = f
+  # check the initial convergent
+  f = fs.get(1)
+  if f is not None: yield (f, 0)
   (P, Q, G0, G1, B0, B1) = (0, 1, 0, 1, 1, 0)
   while 1:
     for _ in (0, 1):
@@ -354,7 +357,7 @@ def sqrtmod(a, m, fs=None):
   """
    find square roots of <a> mod <m>.
 
-  i.e. values <x> such that (<x> * <x>) is congurent to <a> (mod <m>).
+  i.e. values <x> such that (<x> * <x>) is congruent to <a> (mod <m>).
 
   an iterator of roots is returned.
 
@@ -441,9 +444,9 @@ def pells_PQa(P, Q, D, rD=None):
     P = a * Q - P
     Q = (D - P*P) // Q
 
-# general LLM (for N^2 > D)
+# general LMM (for N^2 > D)
 def pells_LMM(D, N, rD, u, v):
-  (s, t) = pells1n_fundamental(D)
+  fsol = Delay(pells1n_fundamental, D)
   for (f, _) in divisors_pairs(abs(N)):
     (M, r) = divmod(N, f * f)
     if r != 0: continue
@@ -458,11 +461,13 @@ def pells_LMM(D, N, rD, u, v):
             (x, y) = (f * pG, f * pB)
           else:
             assert pG * pG - D * pB * pB == -M
+            if fsol() is None: break
+            (s, t) = fsol()
             (x, y) = (f * (pG * s + pB * D * t), f * (pB * s + pG * t))
           # find minimum non-negative solution for this family
           # (-x, -y) is in the same family as (x, y)
           if (N > 0 and x < 0) or (N < 0 and y < 0): (x, y) = (-x, -y)
-          # advance until both x any y are non-negative
+          # advance until both x and y are non-negative
           while x < 0 or y < 0:
             (x, y) = (u * x + D * v * y, v * x + u * y)
           yield (x, y)
@@ -500,7 +505,7 @@ def _diop_quad_bp(a, b, c):
   # are there too many values to brute force?
   if Y0 - Y1 >= cornacchia_threshold:
     if a == 1 and b < c and gcd(b, c) == 1:
-      if verbose: printf("[pells] switching to Cornacchia (instead of brute forcing {n} values)", n=Y0 - Y1)
+      if verbose: printf("[pells] switching to cornacchia (instead of brute forcing {n} values)", n=Y0 - Y1)
       for s in cornacchia(b, c): yield s
       return
     # otherwise fall back to brute force
