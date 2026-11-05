@@ -14,7 +14,7 @@ from enigma import (
 )
 
 __author__ = "Jim Randell <jim.randell@gmail.com>"
-__version__ = "2026-09-26"
+__version__ = "2026-11-04"
 
 ###############################################################################
 
@@ -240,6 +240,8 @@ def __block_universe():
     (W, H) = (len(grid[0]), len(grid))
     # and then turn it into a linear list
     g = flatten(grid)
+    # check the rectangles will exactly cover the grid
+    fail(sum(g) != W * H, "invalid grid")
     # map positions to rectangle size
     pos = dict((i, v) for (i, v) in enumerate(g) if v > 0)
     ps = set(pos.keys())
@@ -297,7 +299,7 @@ def __block_universe():
           n = sol[y][x]
           if n not in rect:
             # top-left
-            rect[n] = [(x, y), None]
+            rect[n] = [(x, y), (x + 1, y + 1)]
           else:
             # other, last will be bottom-right
             rect[n][1] = (x + 1, y + 1)
@@ -310,11 +312,12 @@ def __block_universe():
         # label the rectangles with a 4-colouring
         d = graph.colouring(4, adj)
         if d:
-          # map colouring to actual colours
-          cols = { 1: "#ed6964", 2: "#aadd6c", 3: "#74afda", 4: "#fadf75" } # red/green/blue/yellow
+          # map colouring to actual colours (col[0] is used for size 1 enclosures)
+          col = { 0: "#fff", 1: "#ed6964", 2: "#aadd6c", 3: "#74afda", 4: "#fadf75" } # red/green/blue/yellow
           # plot the colours
           for (n, ((x0, y0), (x1, y1))) in rect.items():
-            p.polygon((x0, y0, x1, y0, x1, y1, x0, y1, x0, y0), width=0, fill=cols[d[sol[y0][x0]]], tag=1)
+            fill = (col[0] if x1 == x0 + 1 and y1 == y0 + 1 else col[d[sol[y0][x0]]])
+            p.polygon((x0, y0, x1, y0, x1, y1, x0, y1, x0, y0), width=0, fill=fill, tag=1)
       except ModuleNotFoundError:
         pass
 
@@ -326,7 +329,8 @@ def __block_universe():
       p.line((x, 0, x, H), width=0, dash=(2, 4), tag=3)
     for (y, x) in cproduct([irange(H), irange(W)]):
       n = grid[y][x]
-      if n != 0:
+      # don't label size 1 enclosures
+      if n > 1:
         p.label((x + 0.5, y + 0.5), str(n), font=font, tag=2)
 
     # bounding box
