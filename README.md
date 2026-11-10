@@ -14,4 +14,6 @@ Additional modules for solving puzzles that depend on **enigma.py**.
 
 **cube.py** = the rotatations of a cube.
 
+**penney.py** = routines for solving Penney's Game.
+
 **puzzlr.py** = solvers for New Scientist "Puzzlr" puzzles.
